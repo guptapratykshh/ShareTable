@@ -136,16 +136,17 @@ export function DonationDetailsPage() {
 
         {myClaim && (
           <div className="rounded-[1.5rem] border border-border bg-card p-5">
-            <p className="font-semibold">Your reservation</p>
-            <p className="mt-1 text-sm text-muted">
-              {myClaim.quantity} meals
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-semibold">Your reservation</p>
+                <p className="mt-1 text-sm text-muted">{myClaim.quantity} meals</p>
+              </div>
               {myClaim.claimCode ? (
-                <>
-                  {" "}
-                  · pickup code <span className="font-mono text-primary">{myClaim.claimCode}</span>
-                </>
+                <p className="shrink-0 font-mono text-2xl font-semibold tracking-widest text-primary sm:text-3xl">
+                  {myClaim.claimCode}
+                </p>
               ) : null}
-            </p>
+            </div>
             <Link to={`/claims/${myClaim.id}`} className="mt-3 inline-block text-sm font-medium text-primary">
               Open pickup details
             </Link>
