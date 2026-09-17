@@ -1,13 +1,22 @@
 import { Bell, LogOut } from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { homeFor, useAuth } from "../context/AuthContext";
-import { useNotifications } from "../hooks/useNotifications";
+import { NotificationProvider, useNotifications } from "../context/NotificationContext";
 import { BrandMark } from "./SiteHeader";
+import { NotificationToasts } from "./NotificationToasts";
 
 export function AppLayout() {
+  return (
+    <NotificationProvider>
+      <AppShell />
+    </NotificationProvider>
+  );
+}
+
+function AppShell() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { unreadCount } = useNotifications(Boolean(user));
+  const { unreadCount } = useNotifications();
 
   const links =
     user?.role === "DONOR"
@@ -30,6 +39,7 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen">
+      <NotificationToasts />
       <header className="border-b border-border bg-card/80 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
           <BrandMark to={user ? homeFor(user.role) : "/"} />
