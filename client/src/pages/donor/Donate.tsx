@@ -130,16 +130,18 @@ export function DonatePage() {
         <Field label="Storage condition">
           <input className={inputClass} value={form.storageCondition} onChange={(e) => set("storageCondition", e.target.value)} />
         </Field>
-        <Field label="Pickup location">
-          <input className={inputClass} value={form.address} onChange={(e) => set("address", e.target.value)} required />
-        </Field>
+        <LocationPicker
+          label="Pickup location"
+          value={location}
+          address={form.address}
+          onChange={({ lat, lng, address }) => {
+            setLocation({ lat, lng });
+            set("address", address);
+          }}
+        />
         <Field label="Pickup instructions">
           <textarea className={inputClass} rows={2} value={form.pickupInstructions} onChange={(e) => set("pickupInstructions", e.target.value)} />
         </Field>
-        <div>
-          <p className="mb-1.5 text-sm font-medium">Pin the pickup point</p>
-          <LocationPicker value={location} onChange={setLocation} />
-        </div>
         <p className="rounded-xl bg-secondary px-3 py-3 text-xs text-muted">
           Donors are responsible for ensuring that donated food is safe, properly handled, and suitable for consumption.
           ShareTable only facilitates discovery, claiming, and pickup.
