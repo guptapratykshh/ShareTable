@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthShell, Button, Field, inputClass } from "../components/Form";
 import { LocationPicker } from "../components/LocationPicker";
-import { homeFor, useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../services/api";
 import { DONOR_TYPES, RECIPIENT_TYPES } from "../types";
 
@@ -35,14 +35,14 @@ export function RegisterPage() {
     setError("");
     setPending(true);
     try {
-      const user = await register({
+      await register({
         ...form,
         role,
         location,
         donorType: role === "DONOR" ? form.donorType : undefined,
         recipientType: role === "RECIPIENT" ? form.recipientType : undefined,
       });
-      navigate(homeFor(user.role));
+      navigate(`/check-email?email=${encodeURIComponent(form.email.trim())}`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not register.");
     } finally {

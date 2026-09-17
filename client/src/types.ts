@@ -12,6 +12,7 @@ export type User = {
   address: string;
   isVerified: boolean;
   isFlagged?: boolean;
+  emailVerified?: boolean;
   createdAt: string;
   location?: { lat: number; lng: number };
 };
