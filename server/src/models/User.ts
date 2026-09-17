@@ -13,6 +13,9 @@ export interface UserDoc extends mongoose.Document {
   address: string;
   location: GeoPoint;
   isVerified: boolean;
+  emailVerified: boolean;
+  emailVerifyTokenHash?: string;
+  emailVerifyExpires?: Date;
   isFlagged: boolean;
   createdAt: Date;
 }
@@ -38,6 +41,9 @@ const userSchema = new Schema<UserDoc>(
     address: { type: String, required: true, trim: true },
     location: { type: geoSchema, required: true },
     isVerified: { type: Boolean, default: true },
+    emailVerified: { type: Boolean, default: false },
+    emailVerifyTokenHash: { type: String },
+    emailVerifyExpires: { type: Date },
     isFlagged: { type: Boolean, default: false },
   },
   { timestamps: { createdAt: true, updatedAt: false } },

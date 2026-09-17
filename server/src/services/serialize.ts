@@ -63,6 +63,7 @@ export function publicUser(user: {
   address: string;
   isVerified: boolean;
   isFlagged?: boolean;
+  emailVerified?: boolean;
   createdAt: Date;
   location: { coordinates: [number, number] };
 }) {
@@ -78,6 +79,7 @@ export function publicUser(user: {
     address: user.address,
     isVerified: user.isVerified,
     isFlagged: user.isFlagged,
+    emailVerified: Boolean(user.emailVerified),
     createdAt: user.createdAt,
     location: coords(user.location),
   };

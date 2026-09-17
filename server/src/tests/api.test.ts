@@ -9,6 +9,7 @@ import { Claim } from "../models/Claim.js";
 import { Notification } from "../models/Notification.js";
 import { destination, ORIGIN, seedDatabase } from "../scripts/seed.js";
 import { haversineKm } from "../utils.js";
+import { resetSentMail, sentMail } from "../services/mail.js";
 
 process.env.DEMO_MODE = "false";
 
@@ -34,29 +35,83 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await seedDatabase();
+  resetSentMail();
 });
 
 describe("authentication", () => {
-  it("registers a donor and rejects other-role dashboards", async () => {
-    const loc = destination(ORIGIN.lat, ORIGIN.lng, 0.2, 10);
-    const res = await request(app).post("/api/auth/register").send({
-      name: "New Mess",
-      email: "newmess@test.demo",
-      phone: "9999999999",
-      password: "Password1",
-      role: "DONOR",
-      donorType: "Restaurant",
-      organizationName: "New Mess",
-      address: "Nearby",
-      location: loc,
-    });
-    expect(res.status).toBe(201);
-    expect(res.body.user.role).toBe("DONOR");
+  function lastVerifyToken() {
+    const url = sentMail.at(-1)?.verifyUrl;
+    expect(url).toBeTruthy();
+    return new URL(url!).searchParams.get("token");
+  }
 
+  const newDonor = {
+    name: "New Mess",
+    email: "newmess@test.demo",
+    phone: "9999999999",
+    password: "Password1",
+    role: "DONOR",
+    donorType: "Restaurant",
+    organizationName: "New Mess",
+    address: "Nearby",
+    location: destination(ORIGIN.lat, ORIGIN.lng, 0.2, 10),
+  };
+
+  it("registers a donor without logging them in until the email is verified", async () => {
+    const res = await request(app).post("/api/auth/register").send(newDonor);
+    expect(res.status).toBe(201);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.token).toBeUndefined();
+    expect(sentMail.at(-1)?.to).toBe("newmess@test.demo");
+    expect(sentMail.at(-1)?.verifyUrl).toMatch(/\/verify-email\?token=/);
+
+    const blocked = await request(app)
+      .post("/api/auth/login")
+      .send({ email: newDonor.email, password: newDonor.password });
+    expect(blocked.status).toBe(403);
+    expect(blocked.body.error).toMatch(/verify your email/i);
+
+    const verified = await request(app).post("/api/auth/verify-email").send({ token: lastVerifyToken() });
+    expect(verified.status).toBe(200);
+
+    const token = await login(newDonor.email, newDonor.password);
     const forbidden = await request(app)
       .get("/api/dashboard/admin")
-      .set("Authorization", `Bearer ${res.body.token}`);
+      .set("Authorization", `Bearer ${token}`);
     expect(forbidden.status).toBe(403);
+  });
+
+  it("rejects a bad or expired verification token", async () => {
+    const res = await request(app).post("/api/auth/register").send(newDonor);
+    expect(res.status).toBe(201);
+    const token = lastVerifyToken();
+
+    const bad = await request(app).post("/api/auth/verify-email").send({ token: "a".repeat(32) });
+    expect(bad.status).toBe(400);
+
+    const user = await User.findOne({ email: newDonor.email });
+    user!.emailVerifyExpires = new Date(Date.now() - 1000);
+    await user!.save();
+
+    const expired = await request(app).post("/api/auth/verify-email").send({ token });
+    expect(expired.status).toBe(400);
+
+    const stillBlocked = await request(app)
+      .post("/api/auth/login")
+      .send({ email: newDonor.email, password: newDonor.password });
+    expect(stillBlocked.status).toBe(403);
+  });
+
+  it("lets demo accounts log in without email verification", async () => {
+    for (const email of ["mess@foodrescue.demo", "helpinghands@foodrescue.demo", "admin@foodrescue.demo"]) {
+      const user = await User.findOne({ email });
+      user!.emailVerified = false;
+      await user!.save();
+      const token = await login(email);
+      const me = await request(app).get("/api/auth/me").set("Authorization", `Bearer ${token}`);
+      expect(me.status).toBe(200);
+      expect(me.body.user.email).toBe(email);
+    }
   });
 
   it("logs in seeded users and blocks unauthenticated access", async () => {

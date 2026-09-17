@@ -4,7 +4,8 @@ import { z } from "zod";
 import { User } from "../models/User.js";
 import { requireAuth, signToken, type AuthedRequest } from "../middleware/auth.js";
 import { publicUser } from "../services/serialize.js";
-import { DONOR_TYPES, RECIPIENT_TYPES } from "../types.js";
+import { hashEmailVerifyToken, issueEmailVerification } from "../services/emailVerification.js";
+import { DONOR_TYPES, RECIPIENT_TYPES, isDemoLoginEmail } from "../types.js";
 import { AppError, point } from "../utils.js";
 
 export const authRouter = Router();
@@ -41,6 +42,14 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+const emailSchema = z.object({
+  email: z.string().trim().email(),
+});
+
+const verifySchema = z.object({
+  token: z.string().trim().min(16).max(128),
+});
+
 authRouter.post("/register", async (req, res, next) => {
   try {
     const parsed = registerSchema.safeParse(req.body);
@@ -64,10 +73,13 @@ authRouter.post("/register", async (req, res, next) => {
       address: data.address,
       location: point(data.location.lng, data.location.lat),
       isVerified: !isNgo,
+      emailVerified: false,
     });
 
-    const token = signToken(user.id, user.role);
-    res.status(201).json({ token, user: publicUser(user) });
+    await issueEmailVerification(user).catch((err) => {
+      console.error("[mail] Verification email was not sent after register", err);
+    });
+    res.status(201).json({ ok: true });
   } catch (err) {
     next(err);
   }
@@ -82,8 +94,48 @@ authRouter.post("/login", async (req, res, next) => {
     const ok = await bcrypt.compare(parsed.data.password, user.passwordHash);
     if (!ok) throw new AppError("Invalid email or password.", 401);
     if (user.isFlagged) throw new AppError("This account has been restricted.", 403);
+    if (user.emailVerified === false && !isDemoLoginEmail(user.email)) {
+      throw new AppError("Verify your email before logging in.", 403);
+    }
     const token = signToken(user.id, user.role);
     res.json({ token, user: publicUser(user) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+authRouter.post("/verify-email", async (req, res, next) => {
+  try {
+    const parsed = verifySchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw new AppError("This verification link is invalid or has expired. Request a new one.");
+    }
+    const hash = hashEmailVerifyToken(parsed.data.token);
+    const user = await User.findOneAndUpdate(
+      {
+        emailVerifyTokenHash: hash,
+        emailVerifyExpires: { $gt: new Date() },
+      },
+      { $set: { emailVerified: true } },
+    );
+    if (!user) {
+      throw new AppError("This verification link is invalid or has expired. Request a new one.");
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+authRouter.post("/resend-verification", async (req, res, next) => {
+  try {
+    const parsed = emailSchema.safeParse(req.body);
+    if (!parsed.success) throw new AppError("Enter a valid email address.");
+    const user = await User.findOne({ email: parsed.data.email.toLowerCase() });
+    if (user && user.emailVerified === false && !isDemoLoginEmail(user.email)) {
+      await issueEmailVerification(user);
+    }
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }

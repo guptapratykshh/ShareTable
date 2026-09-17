@@ -57,6 +57,7 @@ export async function seedDatabase() {
       address: "College Cafeteria, Polaris Campus, Bengaluru",
       location: point(ORIGIN.lng, ORIGIN.lat),
       isVerified: true,
+      emailVerified: true,
     },
     {
       name: "Ananya Rao",
@@ -69,6 +70,7 @@ export async function seedDatabase() {
       address: "1.1 km north of Polaris Campus",
       location: point(hh.lng, hh.lat),
       isVerified: true,
+      emailVerified: true,
     },
     {
       name: "Rahul Menon",
@@ -81,6 +83,7 @@ export async function seedDatabase() {
       address: "1.8 km east of Polaris Campus",
       location: point(ffa.lng, ffa.lat),
       isVerified: true,
+      emailVerified: true,
     },
     {
       name: "Meera Iyer",
@@ -93,6 +96,7 @@ export async function seedDatabase() {
       address: "2.3 km northeast of Polaris Campus",
       location: point(care.lng, care.lat),
       isVerified: true,
+      emailVerified: true,
     },
     {
       name: "Arun Patel",
@@ -105,6 +109,7 @@ export async function seedDatabase() {
       address: "3.8 km south of Polaris Campus",
       location: point(distant.lng, distant.lat),
       isVerified: true,
+      emailVerified: true,
     },
     {
       name: "Kavya Nair",
@@ -117,6 +122,7 @@ export async function seedDatabase() {
       address: "5.2 km west of Polaris Campus",
       location: point(outer.lng, outer.lat),
       isVerified: true,
+      emailVerified: true,
     },
     {
       name: "ShareTable Admin",
@@ -128,6 +134,7 @@ export async function seedDatabase() {
       address: "Operations desk",
       location: point(ORIGIN.lng, ORIGIN.lat),
       isVerified: true,
+      emailVerified: true,
     },
   ]);
 

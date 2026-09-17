@@ -8,6 +8,7 @@ import { Donation } from "../models/Donation.js";
 import { Claim } from "../models/Claim.js";
 import { ORIGIN, seedDatabase } from "../scripts/seed.js";
 import { computeUrgency } from "../services/urgency.js";
+import { resetSentMail, sentMail } from "../services/mail.js";
 
 process.env.DEMO_MODE = "false";
 
@@ -33,6 +34,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await seedDatabase();
+  resetSentMail();
 });
 
 describe("urgency", () => {
@@ -144,7 +146,12 @@ describe("donor intelligence", () => {
       location: loc,
     });
     expect(registered.status).toBe(201);
-    const token = registered.body.token as string;
+    const verifyUrl = sentMail.at(-1)?.verifyUrl;
+    expect(verifyUrl).toBeTruthy();
+    const verifyToken = new URL(verifyUrl!).searchParams.get("token");
+    const confirmed = await request(app).post("/api/auth/verify-email").send({ token: verifyToken });
+    expect(confirmed.status).toBe(200);
+    const token = await login("analytics@test.demo", "Password1");
     const created = await request(app)
       .post("/api/donations")
       .set("Authorization", `Bearer ${token}`)
