@@ -29,6 +29,15 @@ notificationsRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) 
   }
 });
 
+notificationsRouter.patch("/read-all", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    await Notification.updateMany({ recipientId: req.user!.id, isRead: false }, { $set: { isRead: true } });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 notificationsRouter.patch("/:id/read", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const notification = await Notification.findOne({ _id: req.params.id, recipientId: req.user!.id });
