@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Avenir Next", "Segoe UI", sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+  --color-background: oklch(0.975 0 0);
+  --color-foreground: oklch(0.18 0 0);
+  --color-primary: oklch(0.22 0 0);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.925 0 0);
+  --color-secondary-foreground: oklch(0.25 0 0);
+  --color-muted: oklch(0.48 0 0);
+  --color-accent: oklch(0.38 0 0);
+  --color-accent-foreground: oklch(0.98 0 0);
+  --color-card: oklch(0.995 0 0);
+  --color-border: oklch(0.84 0 0);
+  --color-alert: #9b2226;
+  --color-warn: #b5651d;
+  --color-rescued: #2d6a4f;
+  --radius: 1rem;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--color-foreground);
+  background-color: var(--color-background);
+  background-image:
+    linear-gradient(rgba(20, 20, 28, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 20, 28, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+  font-family: var(--font-sans);
+}
+
+.display,
+.font-display {
+  font-family: var(--font-display);
+}
+
+::selection {
+  background: oklch(0.78 0 0);
+  color: oklch(0.16 0 0);
+}
+
+.leaflet-container {
+  font-family: var(--font-sans);
+  border-radius: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
