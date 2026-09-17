@@ -35,6 +35,7 @@ export type Donation = {
   distanceKm?: number;
   address?: string;
   pickupInstructions?: string;
+  allergens?: string[];
   location?: { lat: number; lng: number };
   escalationLevel?: number;
   currentRadiusKm?: number;
@@ -56,6 +57,8 @@ export type Claim = {
   recipient?: { id: string; name: string; organizationName?: string; reliabilityScore?: number | null };
   pickedUpAt?: string;
   pickupDurationMinutes?: number;
+  lateMinutes?: number;
+  lateNote?: string;
 };
 
 export type NotificationItem = {
@@ -102,4 +105,18 @@ export const FOOD_CATEGORIES = [
   "Snacks",
   "Dessert",
   "Other",
+] as const;
+
+export const COMMON_ALLERGENS = [
+  "Peanuts",
+  "Tree nuts",
+  "Milk",
+  "Eggs",
+  "Wheat / gluten",
+  "Soy",
+  "Fish",
+  "Shellfish",
+  "Sesame",
+  "Mustard",
+  "Sulphites",
 ] as const;

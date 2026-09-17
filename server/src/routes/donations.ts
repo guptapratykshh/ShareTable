@@ -5,13 +5,13 @@ import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth
 import { Claim } from "../models/Claim.js";
 import { Donation } from "../models/Donation.js";
 import { User } from "../models/User.js";
-import { claimMeals, cancelDonation } from "../services/claims.js";
+import { claimMeals, cancelDonation, deleteUnusedDonation } from "../services/claims.js";
 import { expireDonationIfNeeded, expireStaleDonations } from "../services/expiration.js";
 import { distanceBetween, findNearbyDonations, findNearbyRecipients } from "../services/geo.js";
 import { serializeClaim, serializeDonation } from "../services/serialize.js";
 import { reliabilityMap } from "../services/reliability.js";
 import { FOOD_CATEGORIES } from "../types.js";
-import { AppError, kmLabel, point, routeId } from "../utils.js";
+import { AppError, kmLabel, normalizeAllergens, point, routeId } from "../utils.js";
 
 export const donationsRouter = Router();
 
@@ -25,6 +25,7 @@ const createSchema = z.object({
   storageCondition: z.string().trim().max(200).optional(),
   address: z.string().trim().min(3).max(200),
   pickupInstructions: z.string().trim().max(500).optional(),
+  allergens: z.array(z.string().trim().min(1).max(40)).max(15).optional(),
   imageUrl: z.string().url().optional().or(z.literal("")),
   location: z.object({
     lat: z.coerce.number().gte(-90).lte(90),
@@ -64,6 +65,7 @@ donationsRouter.post("/", requireAuth, requireRole("DONOR"), async (req: AuthedR
       location,
       address: data.address,
       pickupInstructions: data.pickupInstructions,
+      allergens: normalizeAllergens(data.allergens),
       imageUrl: data.imageUrl || undefined,
       status: "ACTIVE",
       safetyConfirmed: true,
@@ -310,8 +312,8 @@ donationsRouter.patch("/:id", requireAuth, requireRole("DONOR"), async (req: Aut
 
 donationsRouter.delete("/:id", requireAuth, requireRole("DONOR"), async (req: AuthedRequest, res, next) => {
   try {
-    const donation = await cancelDonation(routeId(req.params.id), req.user!.id);
-    res.json({ donation: serializeDonation(donation, { role: "DONOR", userId: req.user!.id }) });
+    const result = await deleteUnusedDonation(routeId(req.params.id), req.user!.id);
+    res.json({ ok: true, id: result.id });
   } catch (err) {
     next(err);
   }

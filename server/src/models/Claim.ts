@@ -13,6 +13,9 @@ export interface ClaimDoc extends mongoose.Document {
   completedAt?: Date;
   pickedUpAt?: Date;
   pickupDurationMinutes?: number;
+  lateMinutes?: number;
+  lateNote?: string;
+  lateAt?: Date;
 }
 
 const claimSchema = new Schema<ClaimDoc>(
@@ -32,6 +35,9 @@ const claimSchema = new Schema<ClaimDoc>(
     completedAt: { type: Date },
     pickedUpAt: { type: Date, index: true },
     pickupDurationMinutes: { type: Number },
+    lateMinutes: { type: Number, min: 1, max: 180 },
+    lateNote: { type: String, trim: true, maxlength: 200 },
+    lateAt: { type: Date },
   },
   { timestamps: { createdAt: false, updatedAt: true } },
 );

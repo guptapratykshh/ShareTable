@@ -6,7 +6,7 @@ import { AppError, generatePickupCode } from "../utils.js";
 import { expireDonationIfNeeded } from "./expiration.js";
 import { escalateDonationIfNeeded } from "./escalation.js";
 import { distanceBetween, isWithinRadius } from "./geo.js";
-import { notifyUser } from "./notifications.js";
+import { notifyMany, notifyUser } from "./notifications.js";
 
 export async function maybeCompleteDonation(donation: DonationDoc): Promise<DonationDoc> {
   if (donation.availableQuantity > 0) return donation;
@@ -216,11 +216,69 @@ export async function cancelDonation(donationId: string, donorId: string) {
     throw new AppError("This donation can no longer be cancelled.");
   }
 
+  const openClaims = await Claim.find({
+    donationId: donation._id,
+    status: { $in: ["CLAIMED", "PICKUP_PENDING"] },
+  });
+
   donation.status = "CANCELLED";
   await donation.save();
   await Claim.updateMany(
     { donationId: donation._id, status: { $in: ["CLAIMED", "PICKUP_PENDING"] } },
     { $set: { status: "CANCELLED" } },
   );
+
+  const claimantIds = [...new Set(openClaims.map((c) => String(c.recipientId)))];
+  const nearbyIds = [...new Set(donation.notifiedRecipients.map((n) => String(n.recipientId)))].filter(
+    (id) => !claimantIds.includes(id),
+  );
+
+  if (claimantIds.length) {
+    await notifyMany(claimantIds, {
+      type: "DONATION_CANCELLED",
+      title: "Listing cancelled",
+      message: `The donor cancelled ${donation.foodName}. Your reservation is no longer available.`,
+      donationId: String(donation._id),
+    });
+  }
+  if (nearbyIds.length) {
+    await notifyMany(nearbyIds, {
+      type: "DONATION_CANCELLED",
+      title: "Listing cancelled",
+      message: `The donor cancelled ${donation.foodName}. This listing is no longer available.`,
+      donationId: String(donation._id),
+    });
+  }
+
   return donation;
+}
+
+export async function deleteUnusedDonation(donationId: string, donorId: string) {
+  const donation = await Donation.findById(donationId);
+  if (!donation) throw new AppError("Donation not found.", 404);
+  if (String(donation.donorId) !== donorId) {
+    throw new AppError("You can only remove your own donations.", 403);
+  }
+  if (!["EXPIRED", "CANCELLED"].includes(donation.status)) {
+    throw new AppError("Only expired or cancelled listings with no rescued meals can be removed.");
+  }
+
+  const rescued = await Claim.countDocuments({ donationId: donation._id, status: "PICKED_UP" });
+  if (rescued > 0) {
+    throw new AppError("This listing has recorded pickups, so it stays in history.");
+  }
+
+  const open = await Claim.countDocuments({
+    donationId: donation._id,
+    status: { $in: ["CLAIMED", "PICKUP_PENDING"] },
+  });
+  if (open > 0) {
+    throw new AppError("This listing still has an open pickup.");
+  }
+
+  await Claim.deleteMany({ donationId: donation._id });
+  const { Notification } = await import("../models/Notification.js");
+  await Notification.deleteMany({ donationId: donation._id });
+  await donation.deleteOne();
+  return { id: donationId };
 }

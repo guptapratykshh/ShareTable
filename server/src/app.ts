@@ -10,6 +10,7 @@ import { notificationsRouter } from "./routes/notifications.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { adminRouter } from "./routes/admin.js";
 import { aiRouter } from "./routes/ai.js";
+import { assistantRouter } from "./routes/assistant.js";
 import { donorRouter } from "./routes/donor.js";
 import { recipientsRouter } from "./routes/recipients.js";
 import { placesRouter } from "./routes/places.js";
@@ -61,6 +62,7 @@ export function createApp() {
   app.use("/api/recipients", recipientsRouter);
   app.use("/api/admin", adminRouter);
   app.use("/api/ai", aiRouter);
+  app.use("/api/assistant", assistantRouter);
 
   app.use(notFound);
   app.use(errorHandler);

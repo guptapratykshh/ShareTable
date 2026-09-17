@@ -37,6 +37,23 @@ export function kmLabel(km: number): string {
   return `${km.toFixed(1)} km`;
 }
 
+export function normalizeAllergens(values: unknown): string[] {
+  if (!Array.isArray(values)) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of values) {
+    if (typeof raw !== "string") continue;
+    const name = raw.replace(/\s+/g, " ").trim().slice(0, 40);
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(name);
+    if (out.length >= 15) break;
+  }
+  return out;
+}
+
 export function routeId(value: string | string[] | undefined): string {
   const id = Array.isArray(value) ? value[0] : value;
   if (!id) throw new AppError("Missing id.", 400);

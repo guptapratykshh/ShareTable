@@ -4,6 +4,7 @@ import { homeFor, useAuth } from "../context/AuthContext";
 import { NotificationProvider, useNotifications } from "../context/NotificationContext";
 import { BrandMark } from "./SiteHeader";
 import { NotificationToasts } from "./NotificationToasts";
+import { AssistantPanel } from "./AssistantPanel";
 
 export function AppLayout() {
   return (
@@ -40,6 +41,7 @@ function AppShell() {
   return (
     <div className="min-h-screen">
       <NotificationToasts />
+      <AssistantPanel />
       <header className="border-b border-border bg-card/80 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
           <BrandMark to={user ? homeFor(user.role) : "/"} />

@@ -37,3 +37,8 @@ export function statusLabel(status: string) {
 export function mapsUrl(lat: number, lng: number) {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 }
+
+export function allergenLine(allergens?: string[]) {
+  if (!allergens?.length) return "Allergens not declared";
+  return `Contains: ${allergens.join(", ")}`;
+}

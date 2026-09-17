@@ -23,6 +23,7 @@ type DonationLike = DonationDoc | {
   notifiedRecipientCount?: number;
   address?: string;
   pickupInstructions?: string;
+  allergens?: string[];
   location: { coordinates: [number, number] };
   escalationLevel?: number;
   currentRadiusKm?: number;
@@ -109,6 +110,7 @@ export function serializeDonation(
     imageUrl: donation.imageUrl,
     notifiedRecipientCount: donation.notifiedRecipientCount ?? 0,
     donorId,
+    allergens: Array.isArray(donation.allergens) ? donation.allergens : [],
   };
 
   const urgency = computeUrgency({
@@ -172,6 +174,8 @@ export function serializeClaim(
     completedAt: claim.completedAt,
     pickedUpAt: claim.pickedUpAt,
     pickupDurationMinutes: claim.pickupDurationMinutes,
+    lateMinutes: claim.lateMinutes,
+    lateNote: claim.lateNote,
     donation: extra?.donation,
     recipient: extra?.recipient,
   };

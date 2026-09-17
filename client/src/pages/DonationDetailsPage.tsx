@@ -1,14 +1,15 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { MapContainer, Marker, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { RescueBadge, StatusBadge } from "../components/StatusBadge";
 import { Button, Field, inputClass } from "../components/Form";
+import { ConfirmModal } from "../components/ConfirmModal";
 import { useAuth } from "../context/AuthContext";
 import { api, ApiError } from "../services/api";
 import type { Claim, Donation } from "../types";
-import { formatRemaining, formatTime, mapsUrl } from "../utils/format";
+import { formatRemaining, formatTime, mapsUrl, allergenLine } from "../utils/format";
 import { useCountdown } from "../hooks/useCountdown";
 
 const icon = L.icon({
@@ -22,6 +23,7 @@ const icon = L.icon({
 export function DonationDetailsPage() {
   const { id } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const locationState = useLocation().state as { notified?: number } | null;
   const [donation, setDonation] = useState<Donation | null>(null);
   const [claims, setClaims] = useState<Claim[]>([]);
@@ -32,6 +34,8 @@ export function DonationDetailsPage() {
     locationState?.notified !== undefined ? `${locationState.notified} registered recipients notified within 2.5 km.` : "",
   );
   const [demoMode, setDemoMode] = useState(false);
+  const [confirm, setConfirm] = useState<"cancel" | "remove" | null>(null);
+  const [busy, setBusy] = useState(false);
 
   async function load() {
     const data = await api<{ donation: Donation; claims?: Claim[]; myClaim?: Claim }>(`/api/donations/${id}`);
@@ -80,8 +84,33 @@ export function DonationDetailsPage() {
 
   async function cancel() {
     if (!id) return;
-    await api(`/api/donations/${id}`, { method: "PATCH", body: JSON.stringify({ status: "CANCELLED" }) });
-    load().catch(() => undefined);
+    setError("");
+    setBusy(true);
+    try {
+      await api(`/api/donations/${id}`, { method: "PATCH", body: JSON.stringify({ status: "CANCELLED" }) });
+      setNotice("Listing cancelled. Recipients have been notified.");
+      setConfirm(null);
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not cancel this listing.");
+      setConfirm(null);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeUnused() {
+    if (!id) return;
+    setError("");
+    setBusy(true);
+    try {
+      await api(`/api/donations/${id}`, { method: "DELETE" });
+      navigate("/donor/donations");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not remove this listing.");
+      setConfirm(null);
+      setBusy(false);
+    }
   }
 
   if (!donation) return <p className="text-muted">{error || "Loading…"}</p>;
@@ -95,6 +124,7 @@ export function DonationDetailsPage() {
     donation.availableQuantity > 0;
 
   return (
+    <>
     <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
       <div className="space-y-4">
         <p className="text-sm font-semibold uppercase tracking-wider text-accent">{donation.category}</p>
@@ -105,6 +135,10 @@ export function DonationDetailsPage() {
           <span className="text-sm text-muted">{formatRemaining(donation.expiresAt)}</span>
         </div>
         <p className="text-muted">{donation.description}</p>
+        <p className="text-sm">{allergenLine(donation.allergens)}</p>
+        <p className="text-xs text-muted">
+          Donor-declared. ShareTable does not test meals and this is not a medical guarantee.
+        </p>
         <div className="rounded-[1.5rem] border border-border bg-card p-5">
           <p className="display text-4xl font-semibold tracking-tight">{donation.availableQuantity}</p>
           <p className="text-sm text-muted">meals available of {donation.quantity} posted</p>
@@ -161,10 +195,15 @@ export function DonationDetailsPage() {
           </button>
         )}
 
-        {user?.role === "DONOR" && ["ACTIVE", "PARTIALLY_CLAIMED"].includes(donation.status) && (
-          <button type="button" onClick={cancel} className="text-sm text-alert">
+        {user?.role === "DONOR" && ["ACTIVE", "PARTIALLY_CLAIMED", "FULLY_CLAIMED"].includes(donation.status) && (
+          <Button type="button" variant="danger" onClick={() => setConfirm("cancel")}>
             Cancel this donation
-          </button>
+          </Button>
+        )}
+        {user?.role === "DONOR" && ["EXPIRED", "CANCELLED"].includes(donation.status) && (
+          <Button type="button" variant="danger" onClick={() => setConfirm("remove")}>
+            Remove this listing
+          </Button>
         )}
       </div>
 
@@ -211,5 +250,29 @@ export function DonationDetailsPage() {
         )}
       </aside>
     </div>
+      <ConfirmModal
+        open={confirm === "cancel"}
+        title="Cancel this listing?"
+        body="Recipients with a reservation will be notified. Pickup codes are not included in that message."
+        confirmLabel="Cancel listing"
+        cancelLabel="Keep listing"
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={cancel}
+      />
+      <ConfirmModal
+        open={confirm === "remove"}
+        title="Remove this listing?"
+        body={`${donation.foodName} will be removed from your history. Listings with recorded pickups stay so rescued meals still count.`}
+        confirmLabel="Remove listing"
+        busy={busy}
+        onCancel={() => {
+          if (!busy) setConfirm(null);
+        }}
+        onConfirm={removeUnused}
+      />
+    </>
   );
 }

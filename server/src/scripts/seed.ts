@@ -148,6 +148,7 @@ export async function seedDatabase() {
       location: point(ORIGIN.lng, ORIGIN.lat),
       address: "College Cafeteria, Polaris Campus",
       pickupInstructions: "Enter from the west gate. Ask for the mess supervisor.",
+      allergens: ["Peanuts"],
       status: "ACTIVE",
       safetyConfirmed: true,
       notifiedRecipientCount: 3,

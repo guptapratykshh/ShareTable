@@ -6,6 +6,7 @@ import { createApp } from "../app.js";
 import { User } from "../models/User.js";
 import { Donation } from "../models/Donation.js";
 import { Claim } from "../models/Claim.js";
+import { Notification } from "../models/Notification.js";
 import { destination, ORIGIN, seedDatabase } from "../scripts/seed.js";
 import { haversineKm } from "../utils.js";
 
@@ -131,6 +132,40 @@ describe("donations", () => {
     const far = await login("distantaid@foodrescue.demo");
     const farNotes = await request(app).get("/api/notifications").set("Authorization", `Bearer ${far}`);
     expect(farNotes.body.notifications.filter((n: { donationId: string }) => n.donationId === res.body.donation.id)).toHaveLength(0);
+  });
+
+  it("stores declared allergens and shows them before a claim", async () => {
+    const token = await login("mess@foodrescue.demo");
+    const created = await request(app)
+      .post("/api/donations")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        foodName: "Peanut chutney rice",
+        description: "Leftover rice with peanut chutney.",
+        quantity: 12,
+        category: "Vegetarian",
+        address: "College Cafeteria",
+        pickupInstructions: "West gate",
+        location: ORIGIN,
+        safetyConfirmed: true,
+        allergens: ["Peanuts", "Cashew masala", "Peanuts"],
+      });
+    expect(created.status).toBe(201);
+    expect(created.body.donation.allergens).toEqual(["Peanuts", "Cashew masala"]);
+
+    const hh = await login("helpinghands@foodrescue.demo");
+    const nearby = await request(app).get("/api/donations/nearby").set("Authorization", `Bearer ${hh}`);
+    const card = nearby.body.donations.find((d: { foodName: string }) => d.foodName === "Peanut chutney rice");
+    expect(card).toBeTruthy();
+    expect(card.allergens).toEqual(["Peanuts", "Cashew masala"]);
+    expect(card.address).toBeUndefined();
+
+    const detail = await request(app)
+      .get(`/api/donations/${created.body.donation.id}`)
+      .set("Authorization", `Bearer ${hh}`);
+    expect(detail.status).toBe(200);
+    expect(detail.body.donation.allergens).toEqual(["Peanuts", "Cashew masala"]);
+    expect(detail.body.donation.address).toBeUndefined();
   });
 
   it("marks every notification read for the current user", async () => {
@@ -330,6 +365,54 @@ describe("claims", () => {
     expect(res.body.error).toBe("Donation has expired.");
     const fresh = await Donation.findById(donation!.id);
     expect(fresh!.status).toBe("EXPIRED");
+  });
+
+  it("notifies recipients when a donor cancels a listing", async () => {
+    const donation = await Donation.findOne({ foodName: "Rice + Dal + Vegetables" });
+    const hh = await login("helpinghands@foodrescue.demo");
+    await request(app)
+      .post(`/api/donations/${donation!.id}/claim`)
+      .set("Authorization", `Bearer ${hh}`)
+      .send({ quantity: 10 });
+
+    const donor = await login("mess@foodrescue.demo");
+    const cancelled = await request(app)
+      .patch(`/api/donations/${donation!.id}`)
+      .set("Authorization", `Bearer ${donor}`)
+      .send({ status: "CANCELLED" });
+    expect(cancelled.status).toBe(200);
+    expect(cancelled.body.donation.status).toBe("CANCELLED");
+
+    const notes = await request(app).get("/api/notifications").set("Authorization", `Bearer ${hh}`);
+    const cancelledNote = notes.body.notifications.find((n: { type: string }) => n.type === "DONATION_CANCELLED");
+    expect(cancelledNote).toBeTruthy();
+    expect(cancelledNote.message).toMatch(/reservation is no longer available/);
+    expect(cancelledNote.message).not.toMatch(/\b(?:ST|FR)-\d{4}\b/);
+
+    const ffa = await login("foodforall@foodrescue.demo");
+    const nearbyNotes = await request(app).get("/api/notifications").set("Authorization", `Bearer ${ffa}`);
+    expect(nearbyNotes.body.notifications.some((n: { type: string }) => n.type === "DONATION_CANCELLED")).toBe(true);
+  });
+
+  it("lets a donor remove an expired unused listing and blocks active ones", async () => {
+    const donation = await Donation.findOne({ foodName: "Rice + Dal + Vegetables" });
+    const donor = await login("mess@foodrescue.demo");
+
+    const blocked = await request(app)
+      .delete(`/api/donations/${donation!.id}`)
+      .set("Authorization", `Bearer ${donor}`);
+    expect(blocked.status).toBe(400);
+
+    donation!.expiresAt = new Date(Date.now() - 1000);
+    donation!.status = "EXPIRED";
+    await donation!.save();
+
+    const removed = await request(app)
+      .delete(`/api/donations/${donation!.id}`)
+      .set("Authorization", `Bearer ${donor}`);
+    expect(removed.status).toBe(200);
+    expect(removed.body.ok).toBe(true);
+    expect(await Donation.findById(donation!.id)).toBeNull();
   });
 });
 

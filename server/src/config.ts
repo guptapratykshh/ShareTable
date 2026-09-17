@@ -35,7 +35,9 @@ export const config = {
   patternMinDonations: num("PATTERN_MIN_DONATIONS", 5),
   awsRegion: process.env.AWS_REGION ?? "ap-south-1",
   s3Bucket: process.env.S3_BUCKET ?? "",
-  bedrockModelId: process.env.BEDROCK_MODEL_ID ?? "",
+  get bedrockModelId() {
+    return process.env.BEDROCK_MODEL_ID ?? "";
+  },
   nodeEnv: process.env.NODE_ENV ?? "development",
 };
 

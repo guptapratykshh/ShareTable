@@ -75,7 +75,7 @@ export function ClaimDetailsPage() {
       {error && <p className="text-sm text-alert">{error}</p>}
       {canConfirm && claim.status !== "PICKED_UP" && (
         <form onSubmit={complete} className="rounded-[1.5rem] border border-border bg-card p-5">
-          <Field label="Collector's pickup code">
+          <Field label="Pickup code">
             <input className={inputClass} value={code} placeholder="ST-0000" onChange={(e) => setCode(e.target.value)} autoComplete="off" />
           </Field>
           <Button className="mt-3">Mark as picked up</Button>

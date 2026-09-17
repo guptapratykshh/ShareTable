@@ -30,6 +30,21 @@ export const FOOD_CATEGORIES = [
 ] as const;
 export type FoodCategory = (typeof FOOD_CATEGORIES)[number];
 
+export const COMMON_ALLERGENS = [
+  "Peanuts",
+  "Tree nuts",
+  "Milk",
+  "Eggs",
+  "Wheat / gluten",
+  "Soy",
+  "Fish",
+  "Shellfish",
+  "Sesame",
+  "Mustard",
+  "Sulphites",
+] as const;
+export type CommonAllergen = (typeof COMMON_ALLERGENS)[number];
+
 export const DONATION_STATUSES = [
   "ACTIVE",
   "PARTIALLY_CLAIMED",
@@ -58,6 +73,10 @@ export const NOTIFICATION_TYPES = [
   "DONATION_COMPLETED",
   "RESCUE_EXPANDED",
   "URGENT_RESCUE",
+  "PICKUP_RUNNING_LATE",
+  "PICKUP_INSTRUCTIONS_UPDATED",
+  "PICKUP_ARRIVED",
+  "DONATION_CANCELLED",
 ] as const;
 
 export type UrgencyBand = "NORMAL" | "EXPANDED" | "CRITICAL";

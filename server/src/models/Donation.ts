@@ -23,6 +23,7 @@ export interface DonationDoc extends mongoose.Document {
   address: string;
   pickupInstructions?: string;
   imageUrl?: string;
+  allergens: string[];
   status: DonationStatus;
   safetyConfirmed: boolean;
   notifiedRecipientCount: number;
@@ -65,6 +66,7 @@ const donationSchema = new Schema<DonationDoc>(
     address: { type: String, required: true },
     pickupInstructions: { type: String },
     imageUrl: { type: String },
+    allergens: { type: [String], default: [] },
     status: {
       type: String,
       enum: ["ACTIVE", "PARTIALLY_CLAIMED", "FULLY_CLAIMED", "EXPIRED", "COMPLETED", "CANCELLED"],
