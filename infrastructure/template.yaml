@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: ShareTable API. Deploy only after the local MVP demo works.
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: nodejs20.x
+
+Parameters:
+  JwtSecret:
+    Type: String
+    NoEcho: true
+  DatabaseUrl:
+    Type: String
+    NoEcho: true
+  ClientOrigin:
+    Type: String
+    Default: "*"
+  DefaultRadiusKm:
+    Type: String
+    Default: "2.5"
+  BedrockModelId:
+    Type: String
+    Default: ""
+  ImageBucketName:
+    Type: String
+    Default: ""
+
+Resources:
+  FoodRescueApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+
+  FoodRescueFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../server
+      Handler: dist/lambda.handler
+      Events:
+        Proxy:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FoodRescueApi
+            Path: /{proxy+}
+            Method: ANY
+        Root:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FoodRescueApi
+            Path: /
+            Method: ANY
+      Environment:
+        Variables:
+          DATABASE_URL: !Ref DatabaseUrl
+          JWT_SECRET: !Ref JwtSecret
+          CLIENT_ORIGIN: !Ref ClientOrigin
+          DEFAULT_RADIUS_KM: !Ref DefaultRadiusKm
+          AWS_REGION_NAME: !Ref AWS::Region
+          S3_BUCKET: !Ref ImageBucketName
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
+          NODE_ENV: production
+
+  ImageBucket:
+    Type: AWS::S3::Bucket
+    Condition: CreateImageBucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+Conditions:
+  CreateImageBucket: !Not [!Equals [!Ref ImageBucketName, ""]]
+
+Outputs:
+  ApiUrl:
+    Value: !Sub "https://${FoodRescueApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
