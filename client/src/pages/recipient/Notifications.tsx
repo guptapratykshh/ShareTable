@@ -1,21 +1,19 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useNotifications } from "../../hooks/useNotifications";
-import { api } from "../../services/api";
+import { useNotifications } from "../../context/NotificationContext";
 import { formatDateTime } from "../../utils/format";
 
 export function NotificationsPage() {
-  const { items, setItems, setUnreadCount } = useNotifications(true);
+  const { items, markAllRead } = useNotifications();
 
-  async function markRead(id: string) {
-    await api(`/api/notifications/${id}/read`, { method: "PATCH" });
-    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
-    setUnreadCount((c) => Math.max(0, c - 1));
-  }
+  useEffect(() => {
+    markAllRead().catch(() => undefined);
+  }, [markAllRead]);
 
   return (
     <div>
       <h1 className="display text-4xl font-semibold tracking-tight">Notifications</h1>
-      <p className="mt-2 text-muted">Updates refresh automatically every 20 seconds.</p>
+      <p className="mt-2 text-muted">New alerts also appear as a pop-up on any screen. Opening this tab marks them read.</p>
       <div className="mt-6 space-y-3">
         {items.map((n) => (
           <article
@@ -37,11 +35,6 @@ export function NotificationsPage() {
                 <Link to={`/claims/${n.claimId}`} className="font-medium text-primary">
                   View claim
                 </Link>
-              )}
-              {!n.isRead && (
-                <button type="button" className="text-muted" onClick={() => markRead(n.id)}>
-                  Mark read
-                </button>
               )}
             </div>
           </article>
