@@ -20,6 +20,7 @@ export function RegisterPage() {
     email: "",
     phone: "",
     password: "",
+    confirmPassword: "",
     organizationName: "",
     address: "",
     donorType: "College Mess",
@@ -33,10 +34,15 @@ export function RegisterPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
     setPending(true);
     try {
+      const { confirmPassword: _confirmPassword, ...fields } = form;
       await register({
-        ...form,
+        ...fields,
         role,
         location,
         donorType: role === "DONOR" ? form.donorType : undefined,
@@ -75,7 +81,26 @@ export function RegisterPage() {
           <input className={inputClass} value={form.phone} onChange={(e) => set("phone", e.target.value)} required />
         </Field>
         <Field label="Password">
-          <input className={inputClass} type="password" value={form.password} onChange={(e) => set("password", e.target.value)} minLength={8} required />
+          <input
+            className={inputClass}
+            type="password"
+            value={form.password}
+            onChange={(e) => set("password", e.target.value)}
+            minLength={8}
+            autoComplete="new-password"
+            required
+          />
+        </Field>
+        <Field label="Confirm password">
+          <input
+            className={inputClass}
+            type="password"
+            value={form.confirmPassword}
+            onChange={(e) => set("confirmPassword", e.target.value)}
+            minLength={8}
+            autoComplete="new-password"
+            required
+          />
         </Field>
         <Field label="Organization name">
           <input className={inputClass} value={form.organizationName} onChange={(e) => set("organizationName", e.target.value)} />
