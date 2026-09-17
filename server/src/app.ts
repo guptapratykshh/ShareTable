@@ -12,6 +12,7 @@ import { adminRouter } from "./routes/admin.js";
 import { aiRouter } from "./routes/ai.js";
 import { donorRouter } from "./routes/donor.js";
 import { recipientsRouter } from "./routes/recipients.js";
+import { placesRouter } from "./routes/places.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 import { publicImpact } from "./services/dashboard.js";
 
@@ -48,6 +49,8 @@ export function createApp() {
       next(err);
     }
   });
+
+  app.use("/api/places", placesRouter);
 
   app.use("/api/auth", authRouter);
   app.use("/api/donations", donationsRouter);
