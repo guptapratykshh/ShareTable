@@ -1,0 +1,17 @@
+node_modules
+dist
+build
+.env
+.env.local
+atlas-credentials.env
+*.log
+.DS_Store
+coverage
+.aws-sam
+.vite
+*.tsbuildinfo
+client/dist
+server/dist
+.data
+accessing-link
+
