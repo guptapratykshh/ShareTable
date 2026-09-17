@@ -133,6 +133,34 @@ describe("donations", () => {
     expect(farNotes.body.notifications.filter((n: { donationId: string }) => n.donationId === res.body.donation.id)).toHaveLength(0);
   });
 
+  it("marks every notification read for the current user", async () => {
+    const token = await login("mess@foodrescue.demo");
+    await request(app)
+      .post("/api/donations")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        foodName: "Rice + Dal + Vegetables",
+        description: "Evening surplus from the college mess.",
+        quantity: 40,
+        category: "Vegetarian",
+        address: "College Cafeteria",
+        pickupInstructions: "West gate",
+        location: ORIGIN,
+        safetyConfirmed: true,
+      });
+
+    const hh = await login("helpinghands@foodrescue.demo");
+    const before = await request(app).get("/api/notifications").set("Authorization", `Bearer ${hh}`);
+    expect(before.body.unreadCount).toBeGreaterThan(0);
+
+    const marked = await request(app).patch("/api/notifications/read-all").set("Authorization", `Bearer ${hh}`);
+    expect(marked.status).toBe(200);
+
+    const after = await request(app).get("/api/notifications").set("Authorization", `Bearer ${hh}`);
+    expect(after.body.unreadCount).toBe(0);
+    expect(after.body.notifications.every((n: { isRead: boolean }) => n.isRead)).toBe(true);
+  });
+
   it("rejects invalid quantity and missing safety confirmation", async () => {
     const token = await login("mess@foodrescue.demo");
     const badQty = await request(app)
