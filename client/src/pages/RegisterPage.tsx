@@ -97,13 +97,15 @@ export function RegisterPage() {
             </select>
           </Field>
         )}
-        <Field label="Address">
-          <input className={inputClass} value={form.address} onChange={(e) => set("address", e.target.value)} required />
-        </Field>
-        <div>
-          <p className="mb-1.5 text-sm font-medium">Location</p>
-          <LocationPicker value={location} onChange={setLocation} />
-        </div>
+        <LocationPicker
+          label="Address"
+          value={location}
+          address={form.address}
+          onChange={({ lat, lng, address }) => {
+            setLocation({ lat, lng });
+            set("address", address);
+          }}
+        />
         {error && <p className="text-sm text-alert">{error}</p>}
         <Button disabled={pending} className="w-full">
           {pending ? "Creating account…" : "Register"}
