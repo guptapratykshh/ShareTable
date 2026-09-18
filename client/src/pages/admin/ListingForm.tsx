@@ -1,11 +1,11 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Field, inputClass } from "../../components/Form";
+import { Button, inputClass } from "../../components/Form";
 import { LocationPicker } from "../../components/LocationPicker";
 import { PageLoading } from "../../components/PageChrome";
 import { api, ApiError } from "../../services/api";
 import { FOOD_CATEGORIES, type Donation, type User } from "../../types";
-import { AdminHeader } from "./AdminChrome";
+import { AdminField, AdminFormCard, AdminHeader } from "./AdminChrome";
 
 export function ListingFormPage() {
   const navigate = useNavigate();
@@ -72,65 +72,76 @@ export function ListingFormPage() {
   if (!kitchens && !error) return <PageLoading label="Loading kitchens…" />;
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
-      <AdminHeader eyebrow="Admin" title="New listing" subtitle="Posted as the chosen kitchen." />
-      <form onSubmit={onSubmit} className="space-y-4 rounded-[1.5rem] border border-border bg-card p-6">
-        {error && <p className="text-sm text-alert">{error}</p>}
-        <Field label="Kitchen">
-          <select
-            className={inputClass}
-            value={donorId}
-            onChange={(e) => {
-              const next = kitchens?.find((k) => k.id === e.target.value);
-              setDonorId(e.target.value);
-              if (next) {
+    <div className="space-y-8">
+      <AdminHeader
+        eyebrow="Listings"
+        title="New listing"
+        subtitle="Post a surplus meal with enough detail for a safe, quick pickup."
+      />
+      <AdminFormCard
+        title="Listing details"
+        description="Clear quantities, categories, and pickup guidance help meals move faster."
+      >
+        <form onSubmit={onSubmit} className="grid gap-x-3.5 gap-y-4 sm:grid-cols-2">
+          {error && <p className="text-sm text-alert sm:col-span-2">{error}</p>}
+          <AdminField label="Kitchen">
+            <select
+              className={inputClass}
+              value={donorId}
+              onChange={(e) => {
+                const next = kitchens?.find((k) => k.id === e.target.value);
+                setDonorId(e.target.value);
+                if (next) {
+                  set("address", next.address);
+                  if (next.location) setLocation(next.location);
+                }
+              }}
+            >
+              {(kitchens ?? []).map((k) => (
+                <option key={k.id} value={k.id}>
+                  {k.organizationName || k.name}
+                </option>
+              ))}
+            </select>
+          </AdminField>
+          <AdminField label="Food name">
+            <input className={inputClass} required placeholder="e.g. Rice + Dal + Vegetables" value={form.foodName} onChange={(e) => set("foodName", e.target.value)} />
+          </AdminField>
+          <AdminField label="Description" wide>
+            <textarea className={inputClass} required rows={4} placeholder="Describe what is available" value={form.description} onChange={(e) => set("description", e.target.value)} />
+          </AdminField>
+          <AdminField label="Meals">
+            <input className={inputClass} type="number" min={1} required value={form.quantity} onChange={(e) => set("quantity", e.target.value)} />
+          </AdminField>
+          <AdminField label="Category">
+            <select className={inputClass} value={form.category} onChange={(e) => set("category", e.target.value)}>
+              {FOOD_CATEGORIES.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </AdminField>
+          <div className="sm:col-span-2">
+            <LocationPicker
+              value={location}
+              address={form.address}
+              onChange={(next) => {
+                setLocation({ lat: next.lat, lng: next.lng });
                 set("address", next.address);
-                if (next.location) setLocation(next.location);
-              }
-            }}
-          >
-            {(kitchens ?? []).map((k) => (
-              <option key={k.id} value={k.id}>
-                {k.organizationName || k.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Food">
-          <input className={inputClass} required value={form.foodName} onChange={(e) => set("foodName", e.target.value)} />
-        </Field>
-        <Field label="Description">
-          <textarea className={inputClass} required rows={3} value={form.description} onChange={(e) => set("description", e.target.value)} />
-        </Field>
-        <Field label="Meals">
-          <input className={inputClass} type="number" min={1} required value={form.quantity} onChange={(e) => set("quantity", e.target.value)} />
-        </Field>
-        <Field label="Category">
-          <select className={inputClass} value={form.category} onChange={(e) => set("category", e.target.value)}>
-            {FOOD_CATEGORIES.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        </Field>
-        <LocationPicker
-          value={location}
-          address={form.address}
-          onChange={(next) => {
-            setLocation({ lat: next.lat, lng: next.lng });
-            set("address", next.address);
-          }}
-        />
-        <Field label="Pickup instructions">
-          <textarea className={inputClass} rows={2} value={form.pickupInstructions} onChange={(e) => set("pickupInstructions", e.target.value)} />
-        </Field>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={form.safetyConfirmed} onChange={(e) => set("safetyConfirmed", e.target.checked)} />
-          Food is suitable for donation and has been handled safely.
-        </label>
-        <Button type="submit" disabled={pending}>
-          {pending ? "Posting…" : "Post listing"}
-        </Button>
-      </form>
+              }}
+            />
+          </div>
+          <AdminField label="Pickup instructions" wide>
+            <textarea className={inputClass} rows={2} value={form.pickupInstructions} onChange={(e) => set("pickupInstructions", e.target.value)} />
+          </AdminField>
+          <label className="flex items-center gap-2 text-sm font-normal sm:col-span-2">
+            <input type="checkbox" checked={form.safetyConfirmed} onChange={(e) => set("safetyConfirmed", e.target.checked)} />
+            Food is suitable for donation and has been handled safely.
+          </label>
+          <Button type="submit" disabled={pending} className="sm:col-span-2">
+            {pending ? "Posting…" : "Save changes"} <span aria-hidden>→</span>
+          </Button>
+        </form>
+      </AdminFormCard>
     </div>
   );
 }
