@@ -1,10 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { MapContainer, Marker, TileLayer } from "react-leaflet";
+import { MapContainer, Marker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { RescueBadge, StatusBadge } from "../components/StatusBadge";
 import { Button, Field, inputClass } from "../components/Form";
+import { PageHeader, PageLoading } from "../components/PageChrome";
+import { ThemedTileLayer } from "../components/ThemedTileLayer";
 import { ConfirmModal } from "../components/ConfirmModal";
 import { useAuth } from "../context/AuthContext";
 import { api, ApiError } from "../services/api";
@@ -113,7 +115,8 @@ export function DonationDetailsPage() {
     }
   }
 
-  if (!donation) return <p className="text-muted">{error || "Loading…"}</p>;
+  if (error && !donation) return <p className="text-alert">{error}</p>;
+  if (!donation) return <PageLoading label="Loading donation…" />;
 
   const hasOpenReservation =
     Boolean(myClaim) && ["PICKUP_PENDING", "CLAIMED"].includes(myClaim!.status);
@@ -128,18 +131,17 @@ export function DonationDetailsPage() {
     <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
       <div className="space-y-4">
         <p className="text-sm font-semibold uppercase tracking-wider text-accent">{donation.category}</p>
-        <h1 className="display text-4xl font-semibold tracking-tight">{donation.foodName}</h1>
+        <PageHeader title={donation.foodName} subtitle={donation.description} />
         <div className="flex flex-wrap items-center gap-3">
           <StatusBadge status={donation.status} />
           <RescueBadge band={donation.urgencyBand} label={donation.urgencyLabel} />
           <span className="text-sm text-muted">{formatRemaining(donation.expiresAt)}</span>
         </div>
-        <p className="text-muted">{donation.description}</p>
         <p className="text-sm">{allergenLine(donation.allergens)}</p>
         <p className="text-xs text-muted">
           Donor-declared. ShareTable does not test meals and this is not a medical guarantee.
         </p>
-        <div className="rounded-[1.5rem] border border-border bg-card p-5">
+        <div className="rounded-[1.5rem] border border-border bg-card p-5 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
           <p className="display text-4xl font-semibold tracking-tight">{donation.availableQuantity}</p>
           <p className="text-sm text-muted">meals available of {donation.quantity} posted</p>
           {donation.distanceKm !== undefined && (
@@ -211,7 +213,7 @@ export function DonationDetailsPage() {
         {donation.location && (
           <div className="h-56 overflow-hidden rounded-2xl border border-border">
             <MapContainer center={[donation.location.lat, donation.location.lng]} zoom={15} className="h-full w-full">
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <ThemedTileLayer />
               <Marker position={[donation.location.lat, donation.location.lng]} icon={icon} />
             </MapContainer>
           </div>
