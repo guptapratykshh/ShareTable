@@ -65,7 +65,7 @@ describe("rescue escalation", () => {
       { $set: { createdAt: new Date(Date.now() - 21 * 60_000) } },
     );
 
-    const donor = await login("mess@foodrescue.demo");
+    const donor = await login("pratykshgupta9999@gmail.com");
     const status = await request(app)
       .get(`/api/donations/${donation!.id}/rescue-status`)
       .set("Authorization", `Bearer ${donor}`);
@@ -123,7 +123,7 @@ describe("rescue escalation", () => {
 
   it("rejects demo-escalate unless DEMO_MODE is enabled", async () => {
     const donation = await Donation.findOne({ foodName: "Rice + Dal + Vegetables" });
-    const donor = await login("mess@foodrescue.demo");
+    const donor = await login("pratykshgupta9999@gmail.com");
     const res = await request(app)
       .post(`/api/donations/${donation!.id}/demo-escalate`)
       .set("Authorization", `Bearer ${donor}`);
@@ -199,7 +199,7 @@ describe("donor intelligence", () => {
   });
 
   it("detects a Friday evening surplus pattern from seeded history", async () => {
-    const donor = await login("mess@foodrescue.demo");
+    const donor = await login("pratykshgupta9999@gmail.com");
     const res = await request(app).get("/api/donor/patterns").set("Authorization", `Bearer ${donor}`);
     expect(res.status).toBe(200);
     expect(res.body.ready).toBe(true);
@@ -210,7 +210,7 @@ describe("donor intelligence", () => {
 
 describe("operational reliability", () => {
   it("computes different scores from claims and never stores them on User", async () => {
-    const admin = await login("admin@foodrescue.demo");
+    const admin = await login("admin.sharedtable@gmail.com");
     const res = await request(app).get("/api/admin/reliability").set("Authorization", `Bearer ${admin}`);
     const rows = res.body.recipients as { name: string; score: number | null }[];
     const hh = rows.find((r) => r.name === "Helping Hands NGO");
@@ -227,7 +227,7 @@ describe("operational reliability", () => {
 
 describe("admin heatmap privacy", () => {
   it("returns snapped coordinates and named areas without user ids", async () => {
-    const admin = await login("admin@foodrescue.demo");
+    const admin = await login("admin.sharedtable@gmail.com");
     const res = await request(app).get("/api/admin/heatmap?range=30d").set("Authorization", `Bearer ${admin}`);
     expect(res.status).toBe(200);
     expect(res.body.privacy).toMatch(/200 m/);
@@ -272,7 +272,7 @@ describe("collector heatmap", () => {
   });
 
   it("rejects a donor from the recipient dashboard", async () => {
-    const donor = await login("mess@foodrescue.demo");
+    const donor = await login("pratykshgupta9999@gmail.com");
     const res = await request(app).get("/api/dashboard/recipient").set("Authorization", `Bearer ${donor}`);
     expect(res.status).toBe(403);
   });
