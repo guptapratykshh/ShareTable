@@ -7,11 +7,12 @@ import { Donation } from "../models/Donation.js";
 import { User } from "../models/User.js";
 import { claimMeals, cancelDonation, deleteUnusedDonation } from "../services/claims.js";
 import { expireDonationIfNeeded, expireStaleDonations } from "../services/expiration.js";
-import { distanceBetween, findNearbyDonations, findNearbyRecipients } from "../services/geo.js";
+import { distanceBetween, findNearbyDonations } from "../services/geo.js";
+import { createDonationListing } from "../services/listings.js";
 import { serializeClaim, serializeDonation } from "../services/serialize.js";
 import { reliabilityMap } from "../services/reliability.js";
 import { FOOD_CATEGORIES } from "../types.js";
-import { AppError, kmLabel, normalizeAllergens, point, routeId } from "../utils.js";
+import { AppError, point, routeId } from "../utils.js";
 
 export const donationsRouter = Router();
 
@@ -44,54 +45,7 @@ donationsRouter.post("/", requireAuth, requireRole("DONOR"), async (req: AuthedR
       }
       throw new AppError(msg);
     }
-    const data = parsed.data;
-    const location = point(data.location.lng, data.location.lat);
-    const nearby = await findNearbyRecipients(location, config.rescueRadiusLevels[0] ?? config.defaultRadiusKm);
-    const now = new Date();
-    const notifiedAt = now;
-    const level1 = 1;
-
-    const donation = await Donation.create({
-      donorId: req.user!.id,
-      foodName: data.foodName,
-      description: data.description,
-      category: data.category,
-      quantity: data.quantity,
-      availableQuantity: data.quantity,
-      preparedAt: data.preparedAt ? new Date(data.preparedAt) : undefined,
-      bestBefore: data.bestBefore ? new Date(data.bestBefore) : undefined,
-      storageCondition: data.storageCondition,
-      expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
-      location,
-      address: data.address,
-      pickupInstructions: data.pickupInstructions,
-      allergens: normalizeAllergens(data.allergens),
-      imageUrl: data.imageUrl || undefined,
-      status: "ACTIVE",
-      safetyConfirmed: true,
-      notifiedRecipientCount: nearby.length,
-      escalationLevel: 1,
-      currentRadiusKm: config.rescueRadiusLevels[0] ?? config.defaultRadiusKm,
-      lastEscalatedAt: now,
-      notifiedRecipients: nearby.map((r) => ({
-        recipientId: r.id,
-        level: level1,
-        notifiedAt,
-      })),
-    });
-
-    const { Notification } = await import("../models/Notification.js");
-    if (nearby.length) {
-      await Notification.insertMany(
-        nearby.map((r) => ({
-          recipientId: r.id,
-          type: "NEW_DONATION",
-          title: "New food donation nearby",
-          message: `${data.quantity} meals available\nFood: ${data.foodName}\nDistance: ${kmLabel(r.distanceKm)}\nPickup: available for the next 1 hour`,
-          donationId: donation._id,
-        })),
-      );
-    }
+    const { donation, nearby } = await createDonationListing(req.user!.id, parsed.data);
 
     res.status(201).json({
       donation: serializeDonation(donation, { role: "DONOR", userId: req.user!.id }),
