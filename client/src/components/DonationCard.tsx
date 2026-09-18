@@ -1,10 +1,10 @@
 import { Clock3, MapPin, Utensils } from "lucide-react";
-import { Link } from "react-router-dom";
 import type { Donation } from "../types";
 import { formatRemaining, allergenLine } from "../utils/format";
 import { useCountdown } from "../hooks/useCountdown";
 import { RescueBadge, StatusBadge } from "./StatusBadge";
 import { Button } from "./Form";
+import { ButtonLink } from "./PageChrome";
 
 export function DonationCard({
   donation,
@@ -22,7 +22,7 @@ export function DonationCard({
   const canRemove = Boolean(onRemove) && ["EXPIRED", "CANCELLED"].includes(donation.status);
 
   return (
-    <article className="flex h-full flex-col rounded-[1.5rem] border border-border bg-card p-5 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+    <article className="flex h-full flex-col rounded-[1.25rem] border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-accent/40">
       <div className="mb-3 flex items-start justify-between gap-3">
         <h3 className="display text-lg font-semibold leading-snug">{donation.foodName}</h3>
         <StatusBadge status={donation.status} />
@@ -50,12 +50,9 @@ export function DonationCard({
       <p className="mt-3 text-xs font-medium uppercase tracking-wider text-muted">{donation.category}</p>
       <p className="mt-1 text-xs text-muted">{allergenLine(donation.allergens)}</p>
       <div className={`mt-auto grid gap-2 pt-4 ${canRemove ? "grid-cols-2" : "grid-cols-1"}`}>
-        <Link
-          to={href}
-          className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90"
-        >
+        <ButtonLink to={href} className="px-4 py-2.5">
           {actionLabel}
-        </Link>
+        </ButtonLink>
         {canRemove && (
           <Button type="button" variant="danger" className="px-4 py-2.5" onClick={onRemove}>
             Remove
