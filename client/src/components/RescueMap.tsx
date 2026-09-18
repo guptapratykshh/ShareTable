@@ -1,5 +1,6 @@
-import { CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet";
+import { CircleMarker, MapContainer, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { ThemedTileLayer } from "./ThemedTileLayer";
 
 export type RescueLiveMarker = {
   id: string;
@@ -25,7 +26,7 @@ export function RescueMap({
 }) {
   return (
     <MapContainer center={[center.lat, center.lng]} zoom={13} className="h-full w-full">
-      <TileLayer attribution="&copy; OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <ThemedTileLayer />
       {markers.map((d) => (
         <CircleMarker
           key={d.id}
