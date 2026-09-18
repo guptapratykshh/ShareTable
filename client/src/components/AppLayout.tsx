@@ -1,4 +1,4 @@
-import { Bell, LogOut } from "lucide-react";
+import { Bell } from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { homeFor, useAuth } from "../context/AuthContext";
 import { NotificationProvider, useNotifications } from "../context/NotificationContext";
@@ -74,9 +74,11 @@ function AppShell() {
                   {unreadCount > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-alert" />}
                 </NavLink>
               )}
-              <span className="hidden max-w-[10rem] truncate font-semibold text-foreground sm:inline lg:max-w-xs">
-                {user?.organizationName || user?.name}
-              </span>
+              {!isAdmin && (
+                <span className="hidden max-w-[10rem] truncate font-semibold text-foreground sm:inline lg:max-w-xs">
+                  {user?.organizationName || user?.name}
+                </span>
+              )}
               <ThemeToggle compact />
               <button
                 type="button"
@@ -84,9 +86,8 @@ function AppShell() {
                   logout();
                   navigate("/");
                 }}
-                className="inline-flex items-center gap-1 rounded-full px-3 py-2 text-muted transition-colors hover:bg-secondary hover:text-foreground"
+                className="inline-flex items-center gap-1 rounded-full px-3 py-2 font-bold text-muted transition-colors hover:bg-secondary hover:text-foreground"
               >
-                <LogOut className="h-4 w-4" />
                 Log out
               </button>
             </div>
