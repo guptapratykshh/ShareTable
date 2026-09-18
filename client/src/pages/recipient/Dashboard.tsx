@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { DonationCard } from "../../components/DonationCard";
+import { EmptyState, PageHeader, PageLoading } from "../../components/PageChrome";
 import { RescueMap, type RescueLiveMarker } from "../../components/RescueMap";
 import { StatCard } from "../../components/StatCard";
 import { api } from "../../services/api";
@@ -39,6 +40,7 @@ export function RecipientDashboard() {
     heatmap?: Heatmap;
   } | null>(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
@@ -51,22 +53,23 @@ export function RecipientDashboard() {
         setDonations(nearby.donations);
         setStats(dash);
       })
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
   const groups = groupDonations(donations);
   const heatmap = stats?.heatmap;
   const maxSurplus = Math.max(1, ...(heatmap?.surplusAreas.map((a) => a.meals) ?? [1]));
 
+  if (loading) return <PageLoading label="Loading nearby food…" />;
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="display text-4xl font-semibold tracking-tight">Nearby food</h1>
-        <p className="mt-1 text-muted">
-          Active donations whose current rescue radius covers your registered location. Listings expiring soon appear
-          first. Reliability is shown for operations only and never hides a listing.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Recipient workspace"
+        title="Nearby food"
+        subtitle="Active donations whose current rescue radius covers your registered location. Listings expiring soon appear first. Reliability is shown for operations only and never hides a listing."
+      />
       {stats && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard label="Meals you picked up" value={stats.mealsPickedUp} />
@@ -147,19 +150,22 @@ export function RecipientDashboard() {
           </div>
         </section>
       )}
-      <section>
-        <h2 className="mb-3 font-semibold">Normal rescue</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {groups.normal.map((d) => (
-            <DonationCard key={d.id} donation={d} />
-          ))}
-        </div>
-        {donations.length === 0 && !error && (
-          <p className="rounded-[1.5rem] border border-dashed border-border bg-secondary p-8 text-center text-sm text-muted">
-            No active donations in range right now. New posts appear here and in notifications.
-          </p>
-        )}
-      </section>
+      {groups.normal.length > 0 && (
+        <section>
+          <h2 className="mb-3 font-semibold">Normal rescue</h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {groups.normal.map((d) => (
+              <DonationCard key={d.id} donation={d} />
+            ))}
+          </div>
+        </section>
+      )}
+      {donations.length === 0 && !error && (
+        <EmptyState
+          title="Nothing nearby right now"
+          body="No active donations in range. New posts appear here and in notifications."
+        />
+      )}
     </div>
   );
 }
