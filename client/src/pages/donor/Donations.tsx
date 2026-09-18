@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { DonationCard } from "../../components/DonationCard";
 import { ConfirmModal } from "../../components/ConfirmModal";
+import { ButtonLink, EmptyState, PageHeader, PageLoading } from "../../components/PageChrome";
 import { api, ApiError } from "../../services/api";
 import type { Donation } from "../../types";
 
@@ -9,6 +10,7 @@ export function DonorDonationsPage() {
   const [error, setError] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
     const d = await api<{ donations: Donation[] }>("/api/donations");
@@ -16,7 +18,9 @@ export function DonorDonationsPage() {
   }
 
   useEffect(() => {
-    load().catch((e) => setError(e.message));
+    load()
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
   const pending = donations.find((d) => d.id === pendingId);
@@ -37,23 +41,33 @@ export function DonorDonationsPage() {
     }
   }
 
+  if (loading) return <PageLoading label="Loading donations…" />;
+
   return (
-    <div>
-      <h1 className="display text-4xl font-semibold tracking-tight">Donation history</h1>
-      <p className="mt-2 text-muted">Active listings, pickups, and expired leftovers. Remove expired listings that were never rescued.</p>
-      {error && <p className="mt-4 text-alert">{error}</p>}
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        {donations.map((d) => (
-          <DonationCard
-            key={d.id}
-            donation={d}
-            actionLabel="View details"
-            onRemove={["EXPIRED", "CANCELLED"].includes(d.status) ? () => setPendingId(d.id) : undefined}
-          />
-        ))}
-      </div>
-      {donations.length === 0 && !error && (
-        <p className="mt-6 rounded-[1.5rem] bg-secondary p-8 text-center text-sm text-muted">No donations yet.</p>
+    <div className="space-y-8">
+      <PageHeader
+        eyebrow="History"
+        title="Donation history"
+        subtitle="Active listings, pickups, and expired leftovers. Remove expired listings that were never rescued."
+      />
+      {error && <p className="text-alert">{error}</p>}
+      {donations.length === 0 && !error ? (
+        <EmptyState
+          title="No donations yet"
+          body="Post surplus food to notify recipients within 2.5 km."
+          action={<ButtonLink to="/donor/donate">Donate surplus food</ButtonLink>}
+        />
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {donations.map((d) => (
+            <DonationCard
+              key={d.id}
+              donation={d}
+              actionLabel="View details"
+              onRemove={["EXPIRED", "CANCELLED"].includes(d.status) ? () => setPendingId(d.id) : undefined}
+            />
+          ))}
+        </div>
       )}
       <ConfirmModal
         open={Boolean(pendingId)}
