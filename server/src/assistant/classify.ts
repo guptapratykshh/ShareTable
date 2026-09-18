@@ -1,5 +1,5 @@
-import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 import { config } from "../config.js";
+import { converseText } from "../services/bedrock.js";
 import { ASSISTANT_INTENTS, type AssistantChatMessage, type AssistantFacts, type AssistantIntent, type ClassifiedIntent } from "./types.js";
 import { knowledgeForPrompt, matchKnowledge } from "./knowledge.js";
 import { extractHintIds } from "./actions.js";
@@ -99,22 +99,12 @@ function parseModelIntent(raw: string, message: string): ClassifiedIntent | null
 }
 
 async function invokeBedrockIntent(message: string, history: AssistantChatMessage[], facts: AssistantFacts) {
-  const client = new BedrockRuntimeClient({ region: config.awsRegion });
   const historyText = history
     .slice(-6)
     .map((m) => `${m.role}: ${m.content}`)
     .join("\n");
-  const command = new InvokeModelCommand({
-    modelId: config.bedrockModelId,
-    contentType: "application/json",
-    accept: "application/json",
-    body: JSON.stringify({
-      anthropic_version: "bedrock-2023-05-31",
-      max_tokens: 200,
-      messages: [
-        {
-          role: "user",
-          content: `Classify this ShareTable food-rescue message. Return JSON only with keys intent, delayMinutes, instructions, claimId, donationId.
+  return converseText(
+    `Classify this ShareTable food-rescue message. Return JSON only with keys intent, delayMinutes, instructions, claimId, donationId.
 Do not return reply, recipientId, donorId, quantity, or a pickup code.
 intent must be one of: ${ASSISTANT_INTENTS.join(", ")}.
 Use claimId/donationId only if they appear in the facts snapshot. Never invent ids.
@@ -126,14 +116,8 @@ ${knowledgeForPrompt()}
 Recent chat:
 ${historyText || "(none)"}
 Current message: ${message}`,
-        },
-      ],
-    }),
-  });
-  const response = await client.send(command);
-  const raw = new TextDecoder().decode(response.body);
-  const json = JSON.parse(raw) as { content?: { text?: string }[] };
-  return json.content?.[0]?.text ?? raw;
+    200,
+  );
 }
 
 export async function classifyAssistantMessage(opts: {
@@ -164,26 +148,11 @@ export async function classifyAssistantMessage(opts: {
 export async function maybeRephraseFaq(answer: string, message: string) {
   if (!config.bedrockModelId) return answer;
   try {
-    const client = new BedrockRuntimeClient({ region: config.awsRegion });
-    const command = new InvokeModelCommand({
-      modelId: config.bedrockModelId,
-      contentType: "application/json",
-      accept: "application/json",
-      body: JSON.stringify({
-        anthropic_version: "bedrock-2023-05-31",
-        max_tokens: 180,
-        messages: [
-          {
-            role: "user",
-            content: `Rephrase this ShareTable fact for the user in one or two sentences. Keep every number exactly. Do not add new facts.\nFact: ${answer}\nUser asked: ${message}`,
-          },
-        ],
-      }),
-    });
-    const response = await client.send(command);
-    const raw = new TextDecoder().decode(response.body);
-    const json = JSON.parse(raw) as { content?: { text?: string }[] };
-    return json.content?.[0]?.text?.trim() || answer;
+    const text = await converseText(
+      `Rephrase this ShareTable fact for the user in one or two sentences. Keep every number exactly. Do not add new facts.\nFact: ${answer}\nUser asked: ${message}`,
+      180,
+    );
+    return text.trim() || answer;
   } catch {
     return answer;
   }
