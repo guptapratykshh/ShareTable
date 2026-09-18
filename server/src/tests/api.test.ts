@@ -102,20 +102,19 @@ describe("authentication", () => {
     expect(stillBlocked.status).toBe(403);
   });
 
-  it("lets demo accounts log in without email verification", async () => {
-    for (const email of ["mess@foodrescue.demo", "helpinghands@foodrescue.demo", "admin@foodrescue.demo"]) {
+  it("blocks unverified accounts from logging in, including seeded emails", async () => {
+    for (const email of ["pratykshgupta9999@gmail.com", "helpinghands@foodrescue.demo", "admin.sharedtable@gmail.com"]) {
       const user = await User.findOne({ email });
       user!.emailVerified = false;
       await user!.save();
-      const token = await login(email);
-      const me = await request(app).get("/api/auth/me").set("Authorization", `Bearer ${token}`);
-      expect(me.status).toBe(200);
-      expect(me.body.user.email).toBe(email);
+      const blocked = await request(app).post("/api/auth/login").send({ email, password: "Demo@123" });
+      expect(blocked.status).toBe(403);
+      expect(blocked.body.error).toMatch(/verify your email/i);
     }
   });
 
   it("logs in seeded users and blocks unauthenticated access", async () => {
-    const token = await login("mess@foodrescue.demo");
+    const token = await login("pratykshgupta9999@gmail.com");
     expect(token).toBeTruthy();
     const me = await request(app).get("/api/auth/me").set("Authorization", `Bearer ${token}`);
     expect(me.body.user.organizationName).toBe("Polaris College Mess");
@@ -125,7 +124,7 @@ describe("authentication", () => {
 
   it("lets admin flag a user so they cannot log in or use the API", async () => {
     const recipient = await login("helpinghands@foodrescue.demo");
-    const admin = await login("admin@foodrescue.demo");
+    const admin = await login("admin.sharedtable@gmail.com");
     const target = await User.findOne({ email: "helpinghands@foodrescue.demo" });
 
     const flagged = await request(app)
@@ -157,7 +156,7 @@ describe("authentication", () => {
 
 describe("donations", () => {
   it("creates a donation with a 1-hour expiry and notifies nearby recipients only", async () => {
-    const token = await login("mess@foodrescue.demo");
+    const token = await login("pratykshgupta9999@gmail.com");
     const res = await request(app)
       .post("/api/donations")
       .set("Authorization", `Bearer ${token}`)
@@ -190,7 +189,7 @@ describe("donations", () => {
   });
 
   it("stores declared allergens and shows them before a claim", async () => {
-    const token = await login("mess@foodrescue.demo");
+    const token = await login("pratykshgupta9999@gmail.com");
     const created = await request(app)
       .post("/api/donations")
       .set("Authorization", `Bearer ${token}`)
@@ -224,7 +223,7 @@ describe("donations", () => {
   });
 
   it("marks every notification read for the current user", async () => {
-    const token = await login("mess@foodrescue.demo");
+    const token = await login("pratykshgupta9999@gmail.com");
     await request(app)
       .post("/api/donations")
       .set("Authorization", `Bearer ${token}`)
@@ -252,7 +251,7 @@ describe("donations", () => {
   });
 
   it("rejects invalid quantity and missing safety confirmation", async () => {
-    const token = await login("mess@foodrescue.demo");
+    const token = await login("pratykshgupta9999@gmail.com");
     const badQty = await request(app)
       .post("/api/donations")
       .set("Authorization", `Bearer ${token}`)
@@ -357,7 +356,7 @@ describe("claims", () => {
     expect(blocked.status).toBe(400);
     expect(blocked.body.error).toMatch(/already have a reservation/);
 
-    const donor = await login("mess@foodrescue.demo");
+    const donor = await login("pratykshgupta9999@gmail.com");
     const confirmed = await request(app)
       .patch(`/api/claims/${first.body.claim.id}`)
       .set("Authorization", `Bearer ${donor}`)
@@ -385,7 +384,7 @@ describe("claims", () => {
     expect(created.body.claim.claimCode).toMatch(/^ST-\d{4}$/);
     const secret = created.body.claim.claimCode as string;
 
-    const donor = await login("mess@foodrescue.demo");
+    const donor = await login("pratykshgupta9999@gmail.com");
     const pending = await request(app)
       .get(`/api/claims/${created.body.claim.id}`)
       .set("Authorization", `Bearer ${donor}`);
@@ -430,7 +429,7 @@ describe("claims", () => {
       .set("Authorization", `Bearer ${hh}`)
       .send({ quantity: 10 });
 
-    const donor = await login("mess@foodrescue.demo");
+    const donor = await login("pratykshgupta9999@gmail.com");
     const cancelled = await request(app)
       .patch(`/api/donations/${donation!.id}`)
       .set("Authorization", `Bearer ${donor}`)
@@ -451,7 +450,7 @@ describe("claims", () => {
 
   it("lets a donor remove an expired unused listing and blocks active ones", async () => {
     const donation = await Donation.findOne({ foodName: "Rice + Dal + Vegetables" });
-    const donor = await login("mess@foodrescue.demo");
+    const donor = await login("pratykshgupta9999@gmail.com");
 
     const blocked = await request(app)
       .delete(`/api/donations/${donation!.id}`)
@@ -485,7 +484,7 @@ describe("dashboard impact", () => {
       .send({ claimCode: claimed.body.claim.claimCode });
     expect(blocked.status).toBe(403);
 
-    const donor = await login("mess@foodrescue.demo");
+    const donor = await login("pratykshgupta9999@gmail.com");
     const confirmed = await request(app)
       .patch(`/api/claims/${claimed.body.claim.id}`)
       .set("Authorization", `Bearer ${donor}`)
@@ -493,7 +492,7 @@ describe("dashboard impact", () => {
     expect(confirmed.status).toBe(200);
     expect(confirmed.body.claim.status).toBe("PICKED_UP");
 
-    const admin = await login("admin@foodrescue.demo");
+    const admin = await login("admin.sharedtable@gmail.com");
     const dashBefore = await request(app).get("/api/dashboard/admin").set("Authorization", `Bearer ${admin}`);
     const rescuedBefore = dashBefore.body.mealsRescued as number;
 
@@ -523,7 +522,7 @@ describe("public impact", () => {
     expect(res.body.defaultRadiusKm).toBe(2.5);
     expect(res.body.listingWindowHours).toBe(1);
 
-    const admin = await login("admin@foodrescue.demo");
+    const admin = await login("admin.sharedtable@gmail.com");
     const dash = await request(app).get("/api/dashboard/admin").set("Authorization", `Bearer ${admin}`);
     expect(res.body.mealsRescued).toBe(dash.body.mealsRescued);
     expect(res.body.totalDonors).toBe(dash.body.totalDonors);
