@@ -1,8 +1,9 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
-import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { inputClass } from "./Form";
+import { ThemedTileLayer } from "./ThemedTileLayer";
 import { reverseGeocode, searchPlaces, type PlaceSuggestion } from "../utils/photon";
 
 const icon = L.icon({
@@ -145,7 +146,7 @@ export function LocationPicker({
     }
   }
 
-  const showList = open && (loading || searchError || address.trim().length >= 3);
+  const showList = Boolean(open && (loading || searchError || address.trim().length >= 3));
 
   return (
     <div className="space-y-2" ref={rootRef}>
@@ -200,7 +201,7 @@ export function LocationPicker({
       </div>
       <div className="relative z-0 h-56 overflow-hidden rounded-[1.5rem] border border-border">
         <MapContainer center={[value.lat, value.lng]} zoom={14} className="h-full w-full" scrollWheelZoom>
-          <TileLayer attribution="&copy; OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <ThemedTileLayer />
           <Marker position={[value.lat, value.lng]} icon={icon} />
           <ClickCapture onPick={applyCoords} />
           <Recenter value={value} />
