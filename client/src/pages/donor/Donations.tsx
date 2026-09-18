@@ -1,9 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DonationCard } from "../../components/DonationCard";
 import { ConfirmModal } from "../../components/ConfirmModal";
-import { ButtonLink, EmptyState, PageHeader, PageLoading } from "../../components/PageChrome";
+import { ButtonLink, EmptyState, FilterPills, PageHeader, PageLoading, SectionToolbar } from "../../components/PageChrome";
+import { MetricStrip } from "../../components/StatCard";
 import { api, ApiError } from "../../services/api";
 import type { Donation } from "../../types";
+
+type Filter = "all" | "active" | "completed" | "expired";
+
+function isActive(status: string) {
+  return status === "ACTIVE" || status === "PARTIALLY_CLAIMED";
+}
+
+function isCompleted(status: string) {
+  return status === "COMPLETED" || status === "FULLY_CLAIMED";
+}
+
+function isExpired(status: string) {
+  return status === "EXPIRED" || status === "CANCELLED";
+}
 
 export function DonorDonationsPage() {
   const [donations, setDonations] = useState<Donation[]>([]);
@@ -11,10 +26,16 @@ export function DonorDonationsPage() {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<Filter>("all");
+  const [rescued, setRescued] = useState({ meals: 0, rate: 0 });
 
   async function load() {
-    const d = await api<{ donations: Donation[] }>("/api/donations");
+    const [d, dash] = await Promise.all([
+      api<{ donations: Donation[] }>("/api/donations"),
+      api<{ mealsRescued: number; rescueRate: number }>("/api/dashboard/donor").catch(() => ({ mealsRescued: 0, rescueRate: 0 })),
+    ]);
     setDonations(d.donations);
+    setRescued({ meals: dash.mealsRescued, rate: dash.rescueRate });
   }
 
   useEffect(() => {
@@ -24,6 +45,12 @@ export function DonorDonationsPage() {
   }, []);
 
   const pending = donations.find((d) => d.id === pendingId);
+  const visible = useMemo(() => {
+    if (filter === "active") return donations.filter((d) => isActive(d.status));
+    if (filter === "completed") return donations.filter((d) => isCompleted(d.status));
+    if (filter === "expired") return donations.filter((d) => isExpired(d.status));
+    return donations;
+  }, [donations, filter]);
 
   async function confirmRemove() {
     if (!pendingId) return;
@@ -46,11 +73,24 @@ export function DonorDonationsPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="History"
+        eyebrow="Your activity"
         title="Donation history"
-        subtitle="Active listings, pickups, and expired leftovers. Remove expired listings that were never rescued."
+        subtitle="Track active listings, completed pickups, and food that still needs a second chance."
+        actions={
+          <ButtonLink to="/donor/donate">
+            Donate surplus <span aria-hidden>↗</span>
+          </ButtonLink>
+        }
       />
       {error && <p className="text-alert">{error}</p>}
+      <MetricStrip
+        items={[
+          { label: "Total listings", value: donations.length },
+          { label: "Active now", value: donations.filter((d) => isActive(d.status)).length },
+          { label: "Meals rescued", value: rescued.meals },
+          { label: "Rescue rate", value: `${rescued.rate}%` },
+        ]}
+      />
       {donations.length === 0 && !error ? (
         <EmptyState
           title="No donations yet"
@@ -58,16 +98,31 @@ export function DonorDonationsPage() {
           action={<ButtonLink to="/donor/donate">Donate surplus food</ButtonLink>}
         />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {donations.map((d) => (
-            <DonationCard
-              key={d.id}
-              donation={d}
-              actionLabel="View details"
-              onRemove={["EXPIRED", "CANCELLED"].includes(d.status) ? () => setPendingId(d.id) : undefined}
+        <>
+          <SectionToolbar label="All donations" meta={`${visible.length} listing${visible.length === 1 ? "" : "s"}`}>
+            <FilterPills
+              value={filter}
+              onChange={setFilter}
+              options={[
+                { id: "all", label: "All" },
+                { id: "active", label: "Active" },
+                { id: "completed", label: "Completed" },
+                { id: "expired", label: "Expired" },
+              ]}
             />
-          ))}
-        </div>
+          </SectionToolbar>
+          <div className="grid gap-3 md:grid-cols-2">
+            {visible.map((d) => (
+              <DonationCard
+                key={d.id}
+                donation={d}
+                actionLabel="View details"
+                onRemove={isExpired(d.status) ? () => setPendingId(d.id) : undefined}
+              />
+            ))}
+          </div>
+          {visible.length === 0 && <EmptyState title="No listings in this filter" body="Try another status, or post a new surplus listing." />}
+        </>
       )}
       <ConfirmModal
         open={Boolean(pendingId)}
