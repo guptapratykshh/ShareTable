@@ -71,7 +71,7 @@ describe("ShareTable Assistant", () => {
     expect(confirmed.status).toBe(200);
     expect(confirmed.body.reply).toMatch(/notified/i);
 
-    const donor = await login("mess@foodrescue.demo");
+    const donor = await login("pratykshgupta9999@gmail.com");
     const notes = await request(app).get("/api/notifications").set("Authorization", `Bearer ${donor}`);
     const late = notes.body.notifications.find((n: { type: string }) => n.type === "PICKUP_RUNNING_LATE");
     expect(late).toBeTruthy();
@@ -92,7 +92,7 @@ describe("ShareTable Assistant", () => {
     await claimRice(hh, 10);
     const donation = await Donation.findOne({ foodName: "Rice + Dal + Vegetables" });
 
-    const donor = await login("mess@foodrescue.demo");
+    const donor = await login("pratykshgupta9999@gmail.com");
     const ask = await request(app)
       .post("/api/assistant")
       .set("Authorization", `Bearer ${donor}`)
@@ -120,7 +120,7 @@ describe("ShareTable Assistant", () => {
   it("returns 403 when a recipient tries to confirm a donor's instruction update", async () => {
     const hh = await login("helpinghands@foodrescue.demo");
     await claimRice(hh, 10);
-    const donor = await login("mess@foodrescue.demo");
+    const donor = await login("pratykshgupta9999@gmail.com");
     const ask = await request(app)
       .post("/api/assistant")
       .set("Authorization", `Bearer ${donor}`)
@@ -257,7 +257,7 @@ describe("ShareTable Assistant", () => {
   it("does not notify or mutate twice when the same pending action is confirmed twice", async () => {
     const hh = await login("helpinghands@foodrescue.demo");
     const claimed = await claimRice(hh, 10);
-    const donorUser = await User.findOne({ email: "mess@foodrescue.demo" });
+    const donorUser = await User.findOne({ email: "pratykshgupta9999@gmail.com" });
 
     const ask = await request(app)
       .post("/api/assistant")
