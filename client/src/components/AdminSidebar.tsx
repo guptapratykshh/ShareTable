@@ -21,13 +21,13 @@ export function AdminSidebar() {
 
   return (
     <aside
-      className={`sticky top-0 flex h-full shrink-0 flex-col overflow-y-auto border-r border-border bg-card transition-[width] duration-200 ${
-        collapsed ? "w-[72px]" : "w-56"
+      className={`sticky top-0 flex h-full shrink-0 flex-col overflow-y-auto border-r border-border bg-[color-mix(in_srgb,var(--card)_86%,var(--background))] transition-[width] duration-200 ${
+        collapsed ? "w-[72px]" : "w-[235px]"
       }`}
     >
-      <div className={`flex items-center ${collapsed ? "justify-center px-2 py-4" : "justify-between px-4 py-4"}`}>
+      <div className={`flex items-center ${collapsed ? "justify-center px-2 py-6" : "justify-between px-4 py-8"}`}>
         {!collapsed && (
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">Console</p>
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">Admin</p>
         )}
         <button
           type="button"
@@ -38,7 +38,7 @@ export function AdminSidebar() {
           {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
         </button>
       </div>
-      <nav className="flex flex-1 flex-col gap-1 px-2" aria-label="Admin">
+      <nav className="flex flex-1 flex-col gap-1.5 px-3" aria-label="Admin">
         {LINKS.map((link) => (
           <NavLink
             key={link.to}
@@ -46,7 +46,7 @@ export function AdminSidebar() {
             end={"end" in link ? link.end : false}
             title={link.label}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-full px-3 py-2.5 text-[13px] font-extrabold transition-colors ${
+              `flex items-center gap-3 rounded-[14px] px-3.5 py-3 text-sm font-extrabold transition-colors ${
                 collapsed ? "justify-center px-0" : ""
               } ${isActive ? "bg-primary text-primary-foreground" : "text-muted hover:bg-secondary hover:text-foreground"}`
             }
