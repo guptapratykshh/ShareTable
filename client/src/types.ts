@@ -15,6 +15,10 @@ export type User = {
   emailVerified?: boolean;
   createdAt: string;
   location?: { lat: number; lng: number };
+  listingsCount?: number;
+  lastPostedAt?: string;
+  claimsCount?: number;
+  reliabilityScore?: number | null;
 };
 
 export type Donation = {
@@ -42,6 +46,7 @@ export type Donation = {
   currentRadiusKm?: number;
   urgencyBand?: "NORMAL" | "EXPANDED" | "CRITICAL";
   urgencyLabel?: string;
+  donor?: { id: string; name: string; organizationName?: string };
 };
 
 export type Claim = {
