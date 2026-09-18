@@ -1,5 +1,5 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "../../components/Form";
 import { ButtonLink, EmptyState, IconTile, PageHeader, SectionToolbar } from "../../components/PageChrome";
 import { homeFor, useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
@@ -38,19 +38,20 @@ export function NotificationsPage() {
   const empty = EMPTY_COPY[user?.role ?? "ADMIN"];
   const dashboard = user ? homeFor(user.role) : "/";
 
+  useEffect(() => {
+    const opened = Date.now();
+    return () => {
+      if (Date.now() - opened < 200) return;
+      markAllRead().catch(() => undefined);
+    };
+  }, [markAllRead]);
+
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow="Stay in the loop"
         title="Notifications"
         subtitle="Updates about claims, pickups, and listings that need your attention."
-        actions={
-          items.length > 0 ? (
-            <Button type="button" variant="outline" className="min-h-10 px-4 text-[11px]" onClick={() => markAllRead().catch(() => undefined)}>
-              Mark all as read
-            </Button>
-          ) : undefined
-        }
       />
       {items.length > 0 && (
         <SectionToolbar label="Recent updates" meta={unreadCount > 0 ? undefined : "All caught up"}>
