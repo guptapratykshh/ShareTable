@@ -40,7 +40,22 @@ export function VerifyEmailPage() {
 
   if (status === "ok") {
     return (
-      <AuthShell title="Email confirmed" subtitle="You can log in with this address now.">
+      <AuthShell
+        asideTitle={
+          <>
+            Email
+            <br />
+            <em className="not-italic text-accent">confirmed.</em>
+          </>
+        }
+        asideBody="You can log in with this address now."
+        cardEyebrow="Ready"
+        title="Email confirmed"
+        subtitle="You can log in with this address now."
+        switchLabel="Need an account?"
+        switchTo="/register"
+        switchCta="Register"
+      >
         <Link
           to="/login"
           className="inline-flex w-full items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
@@ -53,8 +68,32 @@ export function VerifyEmailPage() {
 
   return (
     <AuthShell
+      asideTitle={
+        status === "working" ? (
+          <>
+            Confirming
+            <br />
+            <em className="not-italic text-accent">your email.</em>
+          </>
+        ) : (
+          <>
+            Could not
+            <br />
+            <em className="not-italic text-accent">confirm.</em>
+          </>
+        )
+      }
+      asideBody={
+        status === "working"
+          ? "Hang on while we verify this link."
+          : "Request a new link from the login page, then try again."
+      }
+      cardEyebrow={status === "working" ? "Please wait" : "Try again"}
       title={status === "working" ? "Confirming email" : "Could not confirm"}
       subtitle={status === "working" ? "Hang on while we verify this link." : "Request a new link from the login page, then try again."}
+      switchLabel="Back"
+      switchTo="/login"
+      switchCta="Log in"
     >
       {error && <p className="text-sm text-alert">{error}</p>}
       {status === "working" ? (
