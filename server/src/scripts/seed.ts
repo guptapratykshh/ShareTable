@@ -48,7 +48,7 @@ export async function seedDatabase() {
   const [donor, helpingHands, foodForAll, communityCare, distantAid, outerReach, admin] = await User.create([
     {
       name: "Campus Manager",
-      email: "mess@foodrescue.demo",
+      email: "pratykshgupta9999@gmail.com",
       phone: "+91 90000 00001",
       passwordHash,
       role: "DONOR",
@@ -126,7 +126,7 @@ export async function seedDatabase() {
     },
     {
       name: "ShareTable Admin",
-      email: "admin@foodrescue.demo",
+      email: "admin.sharedtable@gmail.com",
       phone: "+91 90000 00009",
       passwordHash,
       role: "ADMIN",
