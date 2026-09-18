@@ -46,6 +46,31 @@ function rangeStart(range: string) {
   return d;
 }
 
+const PHOTON = "https://photon.komoot.io";
+const PHOTON_UA = "ShareTable/1.0 (https://github.com/the-ivii/ShareTable)";
+
+async function reverseAreaName(lat: number, lng: number) {
+  try {
+    const params = new URLSearchParams({ lat: String(lat), lon: String(lng) });
+    const res = await fetch(`${PHOTON}/reverse?${params}`, {
+      headers: { Accept: "application/json", "User-Agent": PHOTON_UA },
+      signal: AbortSignal.timeout(2500),
+    });
+    if (!res.ok) return undefined;
+    const data = (await res.json()) as {
+      features?: { properties?: Record<string, unknown> }[];
+    };
+    const props = data.features?.[0]?.properties ?? {};
+    for (const key of ["city", "district", "county", "town", "state"] as const) {
+      const value = props[key];
+      if (typeof value === "string" && value.trim()) return value.trim();
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+
 export async function adminHeatmap(range = "today") {
   const from = rangeStart(range);
   const donations = await Donation.find({ createdAt: { $gte: from } });
@@ -100,11 +125,14 @@ export async function adminHeatmap(range = "today") {
       expired: number;
       availableMeals: number;
       pickupMinutes: number[];
+      placeName: string;
+      latestAt: number;
     }
   >();
 
   const donationCell = new Map<string, string>();
-  for (const d of donations) {
+  const ordered = [...donations].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  for (const d of ordered) {
     const [lng, lat] = d.location.coordinates;
     const id = cellId(lat, lng);
     donationCell.set(d.id, id);
@@ -119,6 +147,8 @@ export async function adminHeatmap(range = "today") {
       expired: 0,
       availableMeals: 0,
       pickupMinutes: [],
+      placeName: "",
+      latestAt: 0,
     };
     cell.donations += 1;
     cell.rescuedMeals += rescuedByDonation.get(d.id) ?? 0;
@@ -128,6 +158,11 @@ export async function adminHeatmap(range = "today") {
       if (computeUrgency(d).band === "CRITICAL") cell.urgent += 1;
     }
     if (d.status === "EXPIRED") cell.expired += 1;
+    const addr = d.address?.trim();
+    if (addr && d.createdAt.getTime() >= cell.latestAt) {
+      cell.placeName = addr;
+      cell.latestAt = d.createdAt.getTime();
+    }
     cells.set(id, cell);
   }
   for (const c of claims) {
@@ -136,13 +171,29 @@ export async function adminHeatmap(range = "today") {
     if (cell && when) cell.pickupMinutes.push((when.getTime() - c.claimedAt.getTime()) / 60000);
   }
 
+  for (const cell of cells.values()) {
+    if (cell.placeName) continue;
+    const area = nearestSurplusArea(cell.lat, cell.lng);
+    if (area) cell.placeName = area.name;
+  }
+
+  await Promise.all(
+    [...cells.values()]
+      .filter((cell) => !cell.placeName)
+      .map(async (cell) => {
+        cell.placeName = (await reverseAreaName(cell.lat, cell.lng)) || "Approximate area";
+      }),
+  );
+
   return {
     range,
     from,
-    privacy: "Markers and cells are snapped to ~200 m grids. Exact coordinates and private addresses are not included.",
+    privacy:
+      "Markers are snapped to ~200 m grids. Area names use the latest listing address or an approximate neighborhood, not a live GPS trail.",
     live,
     cells: [...cells.values()].map((c) => ({
       areaId: c.id,
+      placeName: c.placeName,
       lat: c.lat,
       lng: c.lng,
       donations: c.donations,
