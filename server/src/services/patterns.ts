@@ -1,6 +1,6 @@
-import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 import mongoose from "mongoose";
 import { config } from "../config.js";
+import { converseText } from "./bedrock.js";
 import { Donation } from "../models/Donation.js";
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -128,27 +128,11 @@ export function patternExplanation(insight: { body: string; facts: Record<string
 export async function maybeRewriteInsight(body: string, facts: Record<string, string | number>) {
   if (!config.bedrockModelId) return body;
   try {
-    const client = new BedrockRuntimeClient({ region: config.awsRegion });
-    const command = new InvokeModelCommand({
-      modelId: config.bedrockModelId,
-      contentType: "application/json",
-      accept: "application/json",
-      body: JSON.stringify({
-        anthropic_version: "bedrock-2023-05-31",
-        max_tokens: 180,
-        messages: [
-          {
-            role: "user",
-            content: `Rephrase this surplus-food observation in one or two sentences. Keep every number exactly as given. Do not predict future demand or invent facts.\n\nText: ${body}\nFacts JSON: ${JSON.stringify(facts)}`,
-          },
-        ],
-      }),
-    });
-    const response = await client.send(command);
-    const raw = new TextDecoder().decode(response.body);
-    const json = JSON.parse(raw) as { content?: { text?: string }[] };
-    const text = json.content?.[0]?.text?.trim();
-    return text || body;
+    const text = await converseText(
+      `Rephrase this surplus-food observation in one or two sentences. Keep every number exactly as given. Do not predict future demand or invent facts.\n\nText: ${body}\nFacts JSON: ${JSON.stringify(facts)}`,
+      180,
+    );
+    return text.trim() || body;
   } catch {
     return body;
   }
