@@ -59,13 +59,13 @@ const listingBody = {
 
 describe("admin console", () => {
   it("blocks donors from admin routes", async () => {
-    const donor = await login("mess@foodrescue.demo");
+    const donor = await login("pratykshgupta9999@gmail.com");
     const res = await request(app).get("/api/admin/users").set("Authorization", `Bearer ${donor}`);
     expect(res.status).toBe(403);
   });
 
   it("creates, updates, and deletes a kitchen without rescued meals", async () => {
-    const admin = await login("admin@foodrescue.demo");
+    const admin = await login("admin.sharedtable@gmail.com");
     const created = await request(app).post("/api/admin/users").set("Authorization", `Bearer ${admin}`).send(kitchenBody);
     expect(created.status).toBe(201);
     expect(created.body.user.role).toBe("DONOR");
@@ -90,7 +90,7 @@ describe("admin console", () => {
   });
 
   it("blocks deleting a collector with rescued meals", async () => {
-    const admin = await login("admin@foodrescue.demo");
+    const admin = await login("admin.sharedtable@gmail.com");
     const target = await User.findOne({ email: "helpinghands@foodrescue.demo" });
     const res = await request(app).delete(`/api/admin/users/${target!.id}`).set("Authorization", `Bearer ${admin}`);
     expect(res.status).toBe(400);
@@ -98,8 +98,8 @@ describe("admin console", () => {
   });
 
   it("creates, edits, and deletes a listing without pickups", async () => {
-    const admin = await login("admin@foodrescue.demo");
-    const donor = await User.findOne({ email: "mess@foodrescue.demo" });
+    const admin = await login("admin.sharedtable@gmail.com");
+    const donor = await User.findOne({ email: "pratykshgupta9999@gmail.com" });
     const created = await request(app)
       .post("/api/admin/donations")
       .set("Authorization", `Bearer ${admin}`)
@@ -121,7 +121,7 @@ describe("admin console", () => {
   });
 
   it("blocks deleting a listing with recorded pickups", async () => {
-    const admin = await login("admin@foodrescue.demo");
+    const admin = await login("admin.sharedtable@gmail.com");
     const rescued = await Donation.findOne({ status: "COMPLETED" });
     const res = await request(app).delete(`/api/admin/donations/${rescued!.id}`).set("Authorization", `Bearer ${admin}`);
     expect(res.status).toBe(400);
@@ -129,8 +129,8 @@ describe("admin console", () => {
   });
 
   it("creates a claim, shows the pickup code on detail, and blocks picked-up delete", async () => {
-    const admin = await login("admin@foodrescue.demo");
-    const donor = await User.findOne({ email: "mess@foodrescue.demo" });
+    const admin = await login("admin.sharedtable@gmail.com");
+    const donor = await User.findOne({ email: "pratykshgupta9999@gmail.com" });
     const recipient = await User.findOne({ email: "helpinghands@foodrescue.demo" });
     const listing = await request(app)
       .post("/api/admin/donations")
