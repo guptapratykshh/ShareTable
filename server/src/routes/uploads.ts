@@ -1,13 +1,11 @@
 import { randomUUID } from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Router } from "express";
-import multer from "multer";
+import { z } from "zod";
+import { requireAuth } from "../middleware/auth.js";
+import { config } from "../config.js";
 import { AppError } from "../utils.js";
-
-const uploadDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../uploads");
-fs.mkdirSync(uploadDir, { recursive: true });
 
 const MIME: Record<string, string> = {
   "image/jpeg": ".jpg",
@@ -15,43 +13,38 @@ const MIME: Record<string, string> = {
   "image/webp": ".webp",
 };
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDir),
-  filename: (_req, file, cb) => {
-    const ext = MIME[file.mimetype] ?? ".jpg";
-    cb(null, `${randomUUID()}${ext}`);
-  },
+const bodySchema = z.object({
+  contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
 });
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 1.5 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    if (!MIME[file.mimetype]) {
-      cb(new AppError("Use a JPEG, PNG, or WebP photo."));
-      return;
-    }
-    cb(null, true);
-  },
-});
+function publicPhotoUrl(key: string) {
+  if (config.photoCdnUrl) return `${config.photoCdnUrl.replace(/\/$/, "")}/${key}`;
+  return `https://${config.s3Bucket}.s3.${config.awsRegion}.amazonaws.com/${key}`;
+}
 
-export const uploadsDir = uploadDir;
 export const uploadsRouter = Router();
 
-uploadsRouter.post("/photo", (req, res, next) => {
-  upload.single("file")(req, res, (err) => {
-    if (err instanceof multer.MulterError) {
-      next(new AppError(err.code === "LIMIT_FILE_SIZE" ? "Photo is too large. Use a smaller image." : err.message));
-      return;
-    }
-    if (err) {
-      next(err);
-      return;
-    }
-    if (!req.file) {
-      next(new AppError("Choose a photo to upload."));
-      return;
-    }
-    res.status(201).json({ url: `/uploads/${req.file.filename}` });
-  });
+uploadsRouter.post("/photo-url", requireAuth, async (req, res, next) => {
+  try {
+    if (!config.s3Bucket) throw new AppError("Photo storage is not configured.", 503);
+    const parsed = bodySchema.safeParse(req.body);
+    if (!parsed.success) throw new AppError("Use a JPEG, PNG, or WebP photo.");
+
+    const ext = MIME[parsed.data.contentType];
+    const key = `photos/${randomUUID()}${ext}`;
+    const client = new S3Client({ region: config.awsRegion });
+    const uploadUrl = await getSignedUrl(
+      client,
+      new PutObjectCommand({
+        Bucket: config.s3Bucket,
+        Key: key,
+        ContentType: parsed.data.contentType,
+      }),
+      { expiresIn: 300 },
+    );
+
+    res.json({ uploadUrl, publicUrl: publicPhotoUrl(key), key });
+  } catch (err) {
+    next(err);
+  }
 });
