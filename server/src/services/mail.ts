@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import nodemailer, { type Transporter } from "nodemailer";
 import { config, reloadSmtpEnv } from "../config.js";
 import { AppError } from "../utils.js";
 
@@ -12,7 +12,7 @@ export type SentMail = {
 
 export const sentMail: SentMail[] = [];
 
-let transporter: nodemailer.Transporter | undefined;
+let transporter: Transporter | undefined;
 let transporterKey = "";
 
 function smtpErrorMessage(err: unknown) {
