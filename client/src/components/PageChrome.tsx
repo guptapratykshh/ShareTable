@@ -91,3 +91,72 @@ export function PageLoading({ label = "Loading…" }: { label?: string }) {
     </div>
   );
 }
+
+export function FilterPills<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { id: T; label: string }[];
+  value: T;
+  onChange: (id: T) => void;
+}) {
+  return (
+    <div className="flex max-w-full gap-1.5 overflow-x-auto">
+      {options.map((option) => (
+        <button
+          key={option.id}
+          type="button"
+          onClick={() => onChange(option.id)}
+          className={`whitespace-nowrap rounded-full border px-3 py-2 text-[11px] font-bold transition-colors ${
+            value === option.id
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-border bg-transparent text-muted hover:border-primary hover:bg-primary hover:text-primary-foreground"
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function SectionToolbar({
+  label,
+  meta,
+  children,
+}: {
+  label?: ReactNode;
+  meta?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex items-center gap-3">
+        {label ? <b className="text-sm">{label}</b> : null}
+        {meta ? <span className="text-[11px] text-muted">{meta}</span> : null}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export function IconTile({
+  children,
+  accent = false,
+  className = "",
+}: {
+  children: ReactNode;
+  accent?: boolean;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`grid size-9 shrink-0 place-items-center rounded-[11px] text-sm font-black ${
+        accent ? "bg-mint text-[#171a17]" : "bg-secondary text-foreground"
+      } ${className}`}
+    >
+      {children}
+    </span>
+  );
+}
