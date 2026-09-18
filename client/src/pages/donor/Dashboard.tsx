@@ -9,7 +9,7 @@ import {
   YAxis,
 } from "recharts";
 import { ButtonLink, PageHeader, PageLoading } from "../../components/PageChrome";
-import { StatCard } from "../../components/StatCard";
+import { MetricStrip } from "../../components/StatCard";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../services/api";
 
@@ -99,12 +99,14 @@ export function DonorDashboard() {
         </div>
       </section>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Meals donated" value={stats.mealsDonated} hint="Total posted" />
-        <StatCard label="Meals claimed" value={stats.mealsClaimed ?? 0} hint="Awaiting pickup" />
-        <StatCard label="Meals rescued" value={stats.mealsRescued} hint="Confirmed pickup" />
-        <StatCard label="Rescue rate" value={`${stats.rescueRate}%`} hint="Counted only after pickup" />
-      </div>
+      <MetricStrip
+        items={[
+          { label: "Meals donated", value: stats.mealsDonated, hint: "Total posted" },
+          { label: "Meals claimed", value: stats.mealsClaimed ?? 0, hint: "Awaiting pickup" },
+          { label: "Meals rescued", value: stats.mealsRescued, hint: "Confirmed pickup" },
+          { label: "Rescue rate", value: `${stats.rescueRate}%`, hint: "Counted only after pickup" },
+        ]}
+      />
 
       <div className="grid gap-4 lg:grid-cols-[1.35fr_0.85fr]">
         <article className="rounded-[20px] border border-border bg-card p-6">
