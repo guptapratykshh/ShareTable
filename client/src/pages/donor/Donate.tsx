@@ -171,7 +171,10 @@ export function DonatePage() {
   return (
     <div className="mx-auto max-w-[960px]">
       <section className="max-w-[750px] pb-10 pt-2">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">Share surplus</p>
+        <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">
+          <span className="mr-2 inline-block size-2 rounded-full bg-accent align-middle" />
+          Share surplus
+        </p>
         <h1 className="display mt-3 text-[clamp(3rem,7vw,5.1rem)] leading-[0.94]">
           Give good food
           <br />
