@@ -4,7 +4,7 @@ import { formatRemaining, allergenLine } from "../utils/format";
 import { useCountdown } from "../hooks/useCountdown";
 import { RescueBadge, StatusBadge } from "./StatusBadge";
 import { Button } from "./Form";
-import { ButtonLink } from "./PageChrome";
+import { ButtonLink, IconTile } from "./PageChrome";
 
 export function DonationCard({
   donation,
@@ -22,39 +22,42 @@ export function DonationCard({
   const canRemove = Boolean(onRemove) && ["EXPIRED", "CANCELLED"].includes(donation.status);
 
   return (
-    <article className="flex h-full flex-col rounded-[1.25rem] border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-accent/40">
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <h3 className="display text-lg font-semibold leading-snug">{donation.foodName}</h3>
+    <article className="flex h-full flex-col rounded-[18px] border border-border bg-card p-[22px] transition-all hover:-translate-y-0.5 hover:border-accent/40">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <IconTile>⌁</IconTile>
         <StatusBadge status={donation.status} />
       </div>
-      <div className="mb-3">
+      <h3 className="display text-[23px] font-semibold leading-snug">{donation.foodName}</h3>
+      <div className="mt-2.5">
         <RescueBadge band={donation.urgencyBand} label={donation.urgencyLabel} />
       </div>
-      <p className="flex items-center gap-2 text-sm font-medium">
-        <Utensils className="h-4 w-4 text-accent" />
-        {donation.availableQuantity} meals available
-      </p>
-      {donation.distanceKm !== undefined && (
-        <p className="mt-1 flex items-center gap-2 text-sm text-muted">
-          <MapPin className="h-4 w-4" />
-          {donation.distanceKm.toFixed(1)} km away
+      <div className="mt-5 grid gap-2 text-xs text-muted">
+        <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Utensils className="h-4 w-4 text-accent" />
+          <span>
+            <b className="text-accent">{donation.availableQuantity}</b> meals available
+          </span>
         </p>
-      )}
-      <p className="mt-1 flex items-center gap-2 text-sm text-muted">
-        <Clock3 className="h-4 w-4" />
-        {formatRemaining(donation.expiresAt)}
-      </p>
-      {donation.currentRadiusKm !== undefined && (
-        <p className="mt-1 text-xs text-muted">Rescue radius {donation.currentRadiusKm} km</p>
-      )}
-      <p className="mt-3 text-xs font-medium uppercase tracking-wider text-muted">{donation.category}</p>
-      <p className="mt-1 text-xs text-muted">{allergenLine(donation.allergens)}</p>
-      <div className={`mt-auto grid gap-2 pt-4 ${canRemove ? "grid-cols-2" : "grid-cols-1"}`}>
-        <ButtonLink to={href} className="px-4 py-2.5">
-          {actionLabel}
+        {donation.distanceKm !== undefined && (
+          <p className="flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            {donation.distanceKm.toFixed(1)} km away
+          </p>
+        )}
+        <p className="flex items-center gap-2">
+          <Clock3 className="h-4 w-4" />
+          {formatRemaining(donation.expiresAt)}
+        </p>
+        {donation.currentRadiusKm !== undefined && <p>◷ {donation.currentRadiusKm} km radius</p>}
+        <p className="font-medium uppercase tracking-wider">{donation.category}</p>
+        <p>{allergenLine(donation.allergens)}</p>
+      </div>
+      <div className={`mt-auto grid gap-2.5 pt-6 ${canRemove ? "grid-cols-2" : "grid-cols-1"}`}>
+        <ButtonLink to={href} className="min-h-[42px] justify-center px-4 py-2.5 text-[11px]">
+          {actionLabel} <span aria-hidden>→</span>
         </ButtonLink>
         {canRemove && (
-          <Button type="button" variant="danger" className="px-4 py-2.5" onClick={onRemove}>
+          <Button type="button" variant="outline" className="min-h-[42px] px-4 py-2.5 text-[11px]" onClick={onRemove}>
             Remove
           </Button>
         )}
