@@ -1,11 +1,8 @@
-export function mapTileUrl(dark: boolean) {
-  return dark
-    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-    : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+/** Esri World Street Map. OSMF public tiles block apps; CARTO now watermarks without an API key. */
+export function mapTileUrl(_dark = false) {
+  return "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}";
 }
 
-export function mapTileAttribution(dark: boolean) {
-  return dark
-    ? '&copy; OpenStreetMap &copy; CARTO'
-    : '&copy; OpenStreetMap contributors';
+export function mapTileAttribution(_dark = false) {
+  return "Tiles &copy; Esri &mdash; Source: Esri, OpenStreetMap";
 }
