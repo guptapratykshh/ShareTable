@@ -16,4 +16,4 @@ server/dist
 accessing-link
 server/uploads/*
 !server/uploads/.gitkeep
-
+share-table-ui-suggestions

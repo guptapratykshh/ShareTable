@@ -10,7 +10,8 @@ export function ThemedTileLayer() {
       key="esri-street"
       attribution={mapTileAttribution(dark)}
       url={mapTileUrl(dark)}
-      maxZoom={19}
+      maxNativeZoom={17}
+      maxZoom={17}
     />
   );
 }

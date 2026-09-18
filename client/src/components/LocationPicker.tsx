@@ -200,7 +200,7 @@ export function LocationPicker({
         )}
       </div>
       <div className="relative z-0 h-56 overflow-hidden rounded-[1.5rem] border border-border">
-        <MapContainer center={[value.lat, value.lng]} zoom={14} className="h-full w-full" scrollWheelZoom>
+        <MapContainer center={[value.lat, value.lng]} zoom={14} minZoom={11} maxZoom={17} className="h-full w-full" scrollWheelZoom>
           <ThemedTileLayer />
           <Marker position={[value.lat, value.lng]} icon={icon} />
           <ClickCapture onPick={applyCoords} />
