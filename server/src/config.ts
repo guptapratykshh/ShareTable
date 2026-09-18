@@ -55,8 +55,18 @@ export const config = {
   patternMinDonations: num("PATTERN_MIN_DONATIONS", 5),
   awsRegion: process.env.AWS_REGION ?? "ap-south-1",
   s3Bucket: process.env.S3_BUCKET ?? "",
+  get photoCdnUrl() {
+    return envStr("PHOTO_CLOUDFRONT_URL");
+  },
   get bedrockModelId() {
+    if (this.nodeEnv === "test") return "";
     return process.env.BEDROCK_MODEL_ID ?? "";
+  },
+  get internalTickSecret() {
+    return envStr("INTERNAL_TICK_SECRET");
+  },
+  get runtime() {
+    return envStr("RUNTIME") || "local";
   },
   nodeEnv: process.env.NODE_ENV ?? "development",
   get smtpHost() {
