@@ -1,16 +1,8 @@
-import {
-  ArrowRight,
-  HeartHandshake,
-  MapPin,
-  MoveRight,
-  Package,
-  ShieldCheck,
-  Timer,
-  Users,
-} from "lucide-react";
+import { ArrowRight, HeartHandshake, MapPin, MoveRight, Package, ShieldCheck, Timer } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { SiteHeader } from "../components/SiteHeader";
+import { ButtonLink } from "../components/PageChrome";
 import { api } from "../services/api";
 import type { PublicImpact } from "../types";
 
@@ -35,10 +27,6 @@ function formatRadius(km: number) {
   return `${Number.isInteger(km) ? km : km.toFixed(1).replace(/\.0$/, "")} km`;
 }
 
-function formatWindow(hours: number) {
-  return `${hours}-hour`;
-}
-
 const steps = [
   {
     number: "01",
@@ -59,6 +47,13 @@ const steps = [
     description: "The collector shows a pickup code at the door. Only a recorded handoff counts as rescued.",
   },
 ];
+
+function MetricValue({ ready, children }: { ready: boolean; children: string }) {
+  if (!ready) {
+    return <span className="inline-block h-8 w-16 animate-pulse rounded-xl bg-secondary" aria-hidden />;
+  }
+  return <>{children}</>;
+}
 
 export function LandingPage() {
   const [impact, setImpact] = useState<PublicImpact | null>(null);
@@ -93,176 +88,169 @@ export function LandingPage() {
   const listingHours = impact?.listingWindowHours ?? 1;
   const radiusLabel = formatRadius(radiusKm);
   const windowLabel = listingHours === 1 ? "1 hour" : `${listingHours} hours`;
-  const windowShort = formatWindow(listingHours);
   const ready = impact !== null;
 
   return (
     <main className="min-h-screen overflow-hidden bg-background text-foreground">
-      <div className="relative isolate">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_75%_6%,rgba(24,24,27,0.1),transparent_30%),radial-gradient(circle_at_8%_22%,rgba(15,23,42,0.08),transparent_27%)]" />
-        <SiteHeader />
+      <SiteHeader />
 
-        <section
-          id="top"
-          className="mx-auto grid max-w-7xl items-center gap-14 px-5 pb-20 pt-14 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20 lg:px-12 lg:pb-28 lg:pt-24"
-        >
-          <div className="max-w-2xl">
-            <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3.5 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-              <span className="size-1.5 rounded-full bg-accent" /> A better way to share food
-            </div>
-            <h1 className="font-display text-[clamp(3.3rem,7vw,6.4rem)] font-semibold leading-[0.93] tracking-[-0.065em]">
-              Don't waste food. <span className="text-primary">Rescue it.</span>
-            </h1>
-            <p className="mt-7 max-w-lg text-lg leading-8 text-muted sm:text-xl">
-              ShareTable connects surplus meals with registered recipients nearby. Matching is distance, never a judgment of need.
-            </p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link
-                to="/register"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-4 font-semibold text-accent-foreground shadow-[0_12px_28px_rgba(24,24,27,0.18)] transition-all hover:-translate-y-0.5 hover:bg-accent/90"
-              >
-                Donate food <ArrowRight className="size-4" />
-              </Link>
-              <Link
-                to="/register"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-6 py-4 font-semibold transition-colors hover:bg-secondary"
-              >
-                Find food <MapPin className="size-4 text-primary" />
-              </Link>
-            </div>
-            <div className="mt-9 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-muted">
-              <span className="inline-flex items-center gap-2">
-                <ShieldCheck className="size-4 text-primary" /> Pickup confirmed in person
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <Users className="size-4 text-primary" /> {radiusLabel} matching
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <Timer className="size-4 text-primary" /> {windowShort} listings
-              </span>
-            </div>
+      <section id="top" className="mx-auto grid max-w-7xl items-center gap-14 px-5 pb-16 pt-16 sm:px-8 lg:grid-cols-[1fr_0.76fr] lg:gap-[90px] lg:px-12 lg:pb-24 lg:pt-[105px]">
+        <div className="max-w-[535px]">
+          <p className="mb-5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">
+            <span className="mr-2 inline-block size-2 rounded-full bg-accent align-middle" /> A better way to share food
+          </p>
+          <h1 className="display text-[clamp(3.25rem,7vw,5.1rem)] leading-[0.92] tracking-[-0.055em]">
+            Don't waste food. <em className="not-italic text-accent">Rescue it.</em>
+          </h1>
+          <p className="mt-6 max-w-[470px] text-base leading-[1.7] text-muted">
+            ShareTable connects surplus meals with registered recipients nearby. Matching is distance, never a judgment of need.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-2.5">
+            <ButtonLink to="/register?role=DONOR">
+              Donate food <ArrowRight className="size-4" />
+            </ButtonLink>
+            <ButtonLink to="/register?role=RECIPIENT" variant="outline">
+              Find food <MapPin className="size-4" />
+            </ButtonLink>
           </div>
-
-          <div className="relative mx-auto w-full max-w-[540px]">
-            <div className="absolute -inset-4 rounded-[2.5rem] bg-primary/5 blur-2xl" />
-            <div className="relative overflow-hidden rounded-[2rem] border border-primary/10 bg-[#e7e7ec] p-4 shadow-[0_28px_80px_rgba(15,23,42,0.14)] sm:p-6">
-              <div className="flex items-center justify-between rounded-2xl bg-card/80 px-4 py-3 backdrop-blur-sm">
-                <div className="flex items-center gap-2.5">
-                  <span className="size-2 rounded-full bg-accent" />
-                  <span className="text-sm font-semibold">Live in your neighborhood</span>
-                </div>
-                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">Live</span>
-              </div>
-              <div className="relative mt-4 aspect-[1.05] overflow-hidden rounded-[1.5rem] bg-primary p-6 text-primary-foreground sm:p-8">
-                <div className="absolute -right-16 -top-16 size-56 rounded-full border-[22px] border-primary-foreground/10" />
-                <div className="absolute -bottom-28 -left-16 size-72 rounded-full border-[30px] border-accent/30" />
-                <div className="relative flex h-full flex-col justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-primary-foreground/70">Only picked-up meals</p>
-                    <p className="mt-1 font-display text-4xl font-semibold leading-none tracking-tight sm:text-5xl">
-                      count as
-                      <br />
-                      rescued.
-                    </p>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <p className="text-6xl font-semibold tracking-[-0.08em]">
-                        {ready ? compactCount(mealsRescued) : "..."}
-                      </p>
-                      <p className="mt-1 text-sm text-primary-foreground/70">meals rescued</p>
-                    </div>
-                    <div className="flex size-20 items-center justify-center rounded-full bg-accent text-accent-foreground">
-                      <HeartHandshake className="size-9" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-card p-4">
-                  <p className="text-xs font-medium text-muted">Rescue window</p>
-                  <p className="mt-1 font-display text-2xl font-semibold">{windowLabel}</p>
-                </div>
-                <div className="rounded-2xl bg-card p-4">
-                  <p className="text-xs font-medium text-muted">Starting radius</p>
-                  <p className="mt-1 font-display text-2xl font-semibold">{radiusLabel}</p>
-                </div>
-              </div>
-            </div>
+          <div className="mt-6 flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-bold text-muted">
+            <span className="inline-flex items-center gap-2">
+              <ShieldCheck className="size-3.5" /> Pickup confirmed in person
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <MapPin className="size-3.5" /> {radiusLabel} matching
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <Timer className="size-3.5" /> {listingHours}-hour listings
+            </span>
           </div>
-        </section>
-      </div>
-
-      <section id="impact" className="border-y border-border bg-card/60">
-        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 sm:grid-cols-3 sm:px-8 lg:px-12">
-          {[
-            [ready ? localeCount(mealsRescued) : "...", "meals rescued"],
-            [ready ? localeCount(totalDonors) : "...", "donors"],
-            [ready ? localeCount(totalNgos) : "...", "NGOs"],
-          ].map(([value, label]) => (
-            <div key={label} className="flex items-baseline gap-3 sm:block">
-              <p className="font-display text-3xl font-semibold tracking-tight text-primary sm:text-4xl">{value}</p>
-              <p className="text-sm text-muted sm:mt-1">{label}</p>
-            </div>
-          ))}
         </div>
-        <p className="px-5 pb-8 text-center text-xs text-muted sm:px-8">
+
+        <div className="rounded-3xl border border-border bg-secondary p-[17px] shadow-[18px_20px_0_color-mix(in_srgb,var(--accent)_25%,transparent)]">
+          <div className="flex items-center justify-between px-1 pb-3 text-xs font-extrabold">
+            <span className="inline-flex items-center gap-2">
+              <i className="size-1.5 rounded-full bg-accent" /> Live in your neighborhood
+            </span>
+            <strong className="rounded-full bg-card px-2.5 py-1 text-[10px] font-extrabold">Live</strong>
+          </div>
+          <div className="relative min-h-[285px] overflow-hidden rounded-[18px] bg-[#173b32] p-6 text-[#fffaf2] dark:bg-[#171a17]">
+            <div className="absolute -right-14 -top-12 size-44 rounded-full border-[18px] border-mint/20" />
+            <div className="absolute -bottom-24 -left-20 size-56 rounded-full border-[18px] border-mint/20" />
+            <p className="relative z-10 text-xs font-bold text-mint">Only picked-up meals</p>
+            <h2 className="relative z-10 mt-2 display text-[42px] leading-[0.92]">
+              count as
+              <br />
+              <span className="text-accent">rescued.</span>
+            </h2>
+            <div className="relative z-10 mt-16">
+              <p className="display text-[58px] leading-none">
+                {ready ? compactCount(mealsRescued) : <span className="inline-block h-12 w-24 animate-pulse rounded-xl bg-white/10" />}
+              </p>
+              <p className="mt-2 text-[11px] text-mint">meals rescued</p>
+            </div>
+          </div>
+          <div className="mt-2.5 grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-1 rounded-[13px] bg-card px-3.5 py-4">
+              <span className="text-[10px] text-muted">Rescue window</span>
+              <b className="display text-[17px]">{windowLabel}</b>
+            </div>
+            <div className="flex flex-col gap-1 rounded-[13px] bg-card px-3.5 py-4">
+              <span className="text-[10px] text-muted">Starting radius</span>
+              <b className="display text-[17px]">{radiusLabel}</b>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="impact" className="mx-auto grid max-w-7xl grid-cols-3 gap-5 border-y border-border px-5 py-9 text-center sm:px-8 lg:px-12">
+        {[
+          [ready ? localeCount(mealsRescued) : "", "meals rescued"],
+          [ready ? localeCount(totalDonors) : "", totalDonors === 1 ? "donor" : "donors"],
+          [ready ? localeCount(totalNgos) : "", totalNgos === 1 ? "NGO" : "NGOs"],
+        ].map(([value, label]) => (
+          <div key={label} className="flex flex-col gap-1">
+            <b className="display text-[27px]">
+              <MetricValue ready={ready}>{value}</MetricValue>
+            </b>
+            <span className="text-xs text-muted">{label}</span>
+          </div>
+        ))}
+        <p className="col-span-3 mt-3.5 text-xs text-muted">
           Live totals from this platform. Only meals confirmed picked up count as rescued.
         </p>
       </section>
 
-      <section id="how-it-works" className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
-        <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.15em] text-accent">How a rescue works</p>
-            <h2 className="mt-4 max-w-md font-display text-4xl font-semibold leading-tight tracking-[-0.04em] sm:text-5xl">
-              From leftover to picked up, in three steps.
-            </h2>
-            <p className="mt-5 max-w-sm leading-7 text-muted">
-              No predicted meal counts. Donors enter the surplus. Recipients nearby claim what they can collect.
-            </p>
-          </div>
-          <div className="divide-y divide-border border-y border-border">
-            {steps.map(({ number, icon: Icon, title, description }) => (
-              <div key={number} className="grid gap-4 py-7 sm:grid-cols-[70px_42px_1fr] sm:items-start">
-                <span className="font-mono text-sm font-semibold text-accent">{number}</span>
-                <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Icon className="size-5" />
-                </span>
-                <div>
-                  <h3 className="font-display text-xl font-semibold">{title}</h3>
-                  <p className="mt-2 max-w-md leading-7 text-muted">{description}</p>
-                </div>
+      <section id="how-it-works" className="mx-auto grid max-w-7xl gap-12 px-5 py-20 sm:px-8 lg:grid-cols-[0.8fr_1fr] lg:gap-[100px] lg:px-12 lg:py-[105px]">
+        <div>
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">How a rescue works</p>
+          <h2 className="display mt-4 max-w-[400px] text-[45px] leading-[0.98]">From leftover to picked up, in three steps.</h2>
+          <p className="mt-5 max-w-[360px] leading-[1.65] text-muted">
+            No predicted meal counts. Donors enter the surplus. Recipients nearby claim what they can collect.
+          </p>
+        </div>
+        <div className="border-t border-border">
+          {steps.map(({ number, icon: Icon, title, description }) => (
+            <article key={number} className="grid grid-cols-[42px_38px_1fr] gap-3 border-b border-border py-[22px]">
+              <span className="pt-1 font-mono text-xs">{number}</span>
+              <span className="grid size-8 place-items-center rounded-[10px] bg-mint text-[#171a17]">
+                <Icon className="size-4" />
+              </span>
+              <div>
+                <h3 className="display mb-2 text-lg tracking-[-0.03em]">{title}</h3>
+                <p className="m-0 text-[13px] leading-[1.55] text-muted">{description}</p>
               </div>
-            ))}
-          </div>
+            </article>
+          ))}
         </div>
       </section>
 
-      <section className="mx-5 mb-8 overflow-hidden rounded-[2rem] bg-secondary sm:mx-8 lg:mx-auto lg:max-w-7xl">
-        <div className="grid items-center gap-10 px-6 py-12 sm:px-10 lg:grid-cols-[1fr_auto] lg:px-16 lg:py-16">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.15em] text-accent">For kitchens and messes</p>
-            <h2 className="mt-3 max-w-xl font-display text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
-              Post surplus before it is thrown away.
-            </h2>
-            <p className="mt-4 max-w-lg leading-7 text-muted">
-              Nearby registered recipients are notified. You confirm pickup only when the collector is at the door.
-            </p>
-          </div>
-          <Link
-            to="/register"
-            className="inline-flex items-center gap-2 self-start rounded-full bg-primary px-5 py-3.5 font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90 lg:self-center"
-          >
-            Become a donor <MoveRight className="size-4" />
+      <div className="px-5 sm:px-8 lg:px-12">
+      <section className="mx-auto mb-5 flex max-w-7xl flex-col items-start justify-between gap-8 rounded-3xl bg-[#473021] px-6 py-11 text-[#f6ecdd] sm:px-12 lg:flex-row lg:items-center">
+        <div>
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#efd0bd]">For kitchens and messes</p>
+          <h2 className="display mt-3 max-w-[530px] text-[37px] leading-tight">Post surplus before it is thrown away.</h2>
+          <p className="mt-3 max-w-[510px] leading-[1.5] text-[#efd0bd]">
+            Nearby registered recipients are notified. You confirm pickup only when the collector is at the door.
+          </p>
+        </div>
+        <ButtonLink to="/register?role=DONOR" className="bg-[#f6ecdd] text-[#473021] shadow-none hover:bg-[#fffaf2]">
+          Become a donor <MoveRight className="size-4" />
+        </ButtonLink>
+      </section>
+
+      <section className="mx-auto mb-8 flex max-w-7xl flex-col items-start justify-between gap-8 rounded-3xl border border-border bg-card px-6 py-11 sm:px-12 lg:flex-row lg:items-center">
+        <div>
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">For registered recipients</p>
+          <h2 className="display mt-3 max-w-[530px] text-[37px] leading-tight">
+            Claim what is nearby before the hour is up.
+          </h2>
+          <p className="mt-3 max-w-[510px] leading-[1.5] text-muted">
+            See listings inside the current rescue radius, reserve meals, and show the pickup code in person.
+          </p>
+        </div>
+        <ButtonLink to="/register?role=RECIPIENT" variant="outline">
+          Find food <MapPin className="size-4" />
+        </ButtonLink>
+      </section>
+      </div>
+
+      <footer className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-10 text-xs text-muted sm:px-8 lg:px-12">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <Link to="/" className="font-extrabold text-foreground">
+            ShareTable
           </Link>
+          <nav className="flex flex-wrap gap-x-5 gap-y-2">
+            <a href="#how-it-works" className="hover:text-foreground">
+              How it works
+            </a>
+            <a href="#impact" className="hover:text-foreground">
+              Our impact
+            </a>
+            <Link to="/login" className="hover:text-foreground">
+              Log in
+            </Link>
+          </nav>
         </div>
-      </section>
-
-      <footer className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-12">
-        <Link to="/" className="font-display text-lg font-semibold text-foreground">
-          ShareTable
-        </Link>
         <p className="max-w-xl">
           Donors are responsible for ensuring donated food is safe, properly handled, and suitable for consumption.
           ShareTable only facilitates discovery, claiming, and pickup.
