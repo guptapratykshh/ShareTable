@@ -1,0 +1,13 @@
+node_modules
+client/node_modules
+server/node_modules
+client/dist
+server/dist
+.env
+.env.*
+.git
+.aws-sam
+coverage
+*.log
+Send to pratyksh
+.DS_Store
