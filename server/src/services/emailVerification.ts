@@ -19,7 +19,11 @@ export function createEmailVerifyToken() {
 }
 
 function clientOrigin() {
-  return config.clientOrigin.split(",")[0]?.trim() || "http://localhost:5173";
+  const origins = config.clientOrigin.split(",").map((s) => s.trim()).filter(Boolean);
+  if (config.nodeEnv === "production") {
+    return origins.find((origin) => origin.startsWith("https://")) || origins[0] || "http://localhost:5173";
+  }
+  return origins[0] || "http://localhost:5173";
 }
 
 export function verificationUrl(token: string) {
