@@ -1,23 +1,62 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #f8f0e4;
+  --foreground: #1c3029;
+  --muted: #65716a;
+  --card: #fffaf2;
+  --border: #d9d8ce;
+  --secondary: #dce9dc;
+  --secondary-foreground: #1c3029;
+  --primary: #1c3029;
+  --primary-foreground: #f8f0e4;
+  --accent: #df7d73;
+  --accent-foreground: #fffaf2;
+  --mint: #efd0bd;
+  --alert: #9b2226;
+  --warn: #b5651d;
+  --rescued: #2d6a4f;
+}
+
+.dark {
+  --background: #111311;
+  --foreground: #f4f1e8;
+  --muted: #a9aaa2;
+  --card: #1b1e1b;
+  --border: #343934;
+  --secondary: #252d28;
+  --secondary-foreground: #f4f1e8;
+  --primary: #f4f1e8;
+  --primary-foreground: #171a17;
+  --accent: #f5a26b;
+  --accent-foreground: #171a17;
+  --mint: #d7b98e;
+  --alert: #e07a7a;
+  --warn: #f5a26b;
+  --rescued: #6da68b;
+}
+
 @theme {
   --font-sans: "Inter", "Avenir Next", "Segoe UI", sans-serif;
   --font-display: Georgia, "Times New Roman", serif;
-  --color-background: oklch(0.975 0 0);
-  --color-foreground: oklch(0.18 0 0);
-  --color-primary: oklch(0.22 0 0);
-  --color-primary-foreground: oklch(0.98 0 0);
-  --color-secondary: oklch(0.925 0 0);
-  --color-secondary-foreground: oklch(0.25 0 0);
-  --color-muted: oklch(0.48 0 0);
-  --color-accent: oklch(0.38 0 0);
-  --color-accent-foreground: oklch(0.98 0 0);
-  --color-card: oklch(0.995 0 0);
-  --color-border: oklch(0.84 0 0);
-  --color-alert: #9b2226;
-  --color-warn: #b5651d;
-  --color-rescued: #2d6a4f;
-  --radius: 1rem;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-mint: var(--mint);
+  --color-alert: var(--alert);
+  --color-warn: var(--warn);
+  --color-rescued: var(--rescued);
+  --radius: 1.25rem;
 }
 
 html {
@@ -32,13 +71,10 @@ body,
 
 body {
   margin: 0;
-  color: var(--color-foreground);
-  background-color: var(--color-background);
-  background-image:
-    linear-gradient(rgba(20, 20, 28, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(20, 20, 28, 0.035) 1px, transparent 1px);
-  background-size: 32px 32px;
+  color: var(--foreground);
+  background-color: var(--background);
   font-family: var(--font-sans);
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .display,
@@ -47,13 +83,25 @@ body {
 }
 
 ::selection {
-  background: oklch(0.78 0 0);
-  color: oklch(0.16 0 0);
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--foreground);
 }
 
 .leaflet-container {
   font-family: var(--font-sans);
   border-radius: 0.75rem;
+}
+
+.dark .leaflet-container {
+  background: #1c1c1c;
+}
+
+.dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.95) saturate(0.35);
+}
+
+input[type="checkbox"] {
+  accent-color: var(--accent);
 }
 
 @media (prefers-reduced-motion: reduce) {
