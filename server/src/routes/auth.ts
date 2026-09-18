@@ -5,7 +5,7 @@ import { User } from "../models/User.js";
 import { requireAuth, signToken, type AuthedRequest } from "../middleware/auth.js";
 import { publicUser } from "../services/serialize.js";
 import { hashEmailVerifyToken, issueEmailVerification } from "../services/emailVerification.js";
-import { DONOR_TYPES, RECIPIENT_TYPES, isDemoLoginEmail } from "../types.js";
+import { DONOR_TYPES, RECIPIENT_TYPES } from "../types.js";
 import { AppError, point } from "../utils.js";
 
 export const authRouter = Router();
@@ -94,7 +94,7 @@ authRouter.post("/login", async (req, res, next) => {
     const ok = await bcrypt.compare(parsed.data.password, user.passwordHash);
     if (!ok) throw new AppError("Invalid email or password.", 401);
     if (user.isFlagged) throw new AppError("This account has been restricted.", 403);
-    if (user.emailVerified === false && !isDemoLoginEmail(user.email)) {
+    if (user.emailVerified === false) {
       throw new AppError("Verify your email before logging in.", 403);
     }
     const token = signToken(user.id, user.role);
@@ -132,7 +132,7 @@ authRouter.post("/resend-verification", async (req, res, next) => {
     const parsed = emailSchema.safeParse(req.body);
     if (!parsed.success) throw new AppError("Enter a valid email address.");
     const user = await User.findOne({ email: parsed.data.email.toLowerCase() });
-    if (user && user.emailVerified === false && !isDemoLoginEmail(user.email)) {
+    if (user && user.emailVerified === false) {
       await issueEmailVerification(user);
     }
     res.json({ ok: true });
