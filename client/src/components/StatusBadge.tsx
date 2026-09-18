@@ -23,6 +23,26 @@ export function StatusBadge({ status }: { status: string }) {
   );
 }
 
+export function ToneBadge({
+  tone = "neutral",
+  children,
+}: {
+  tone?: "good" | "warn" | "bad" | "neutral";
+  children: React.ReactNode;
+}) {
+  const styles = {
+    good: "bg-rescued/18 text-rescued",
+    warn: "bg-accent/18 text-accent",
+    bad: "bg-alert/18 text-alert",
+    neutral: "bg-muted/15 text-muted",
+  };
+  return (
+    <span className={`inline-flex w-fit rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${styles[tone]}`}>
+      {children}
+    </span>
+  );
+}
+
 export function RescueBadge({ band, label }: { band?: string; label?: string }) {
   const text =
     label ||
