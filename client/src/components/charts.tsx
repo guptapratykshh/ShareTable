@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useTheme } from "../context/ThemeContext";
 
 export const STATUS_LABELS: Record<string, string> = {
   ACTIVE: "Active",
@@ -23,12 +24,12 @@ export const STATUS_LABELS: Record<string, string> = {
 };
 
 export const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: "oklch(0.22 0 0)",
-  PARTIALLY_CLAIMED: "oklch(0.45 0 0)",
-  FULLY_CLAIMED: "oklch(0.38 0 0)",
-  EXPIRED: "oklch(0.72 0 0)",
-  COMPLETED: "oklch(0.28 0 0)",
-  CANCELLED: "#9b2226",
+  ACTIVE: "var(--accent)",
+  PARTIALLY_CLAIMED: "var(--mint)",
+  FULLY_CLAIMED: "var(--foreground)",
+  EXPIRED: "var(--muted)",
+  COMPLETED: "var(--rescued)",
+  CANCELLED: "var(--alert)",
 };
 
 type ChartTheme = {
@@ -41,29 +42,30 @@ type ChartTheme = {
 };
 
 const FALLBACK: ChartTheme = {
-  ink: "oklch(0.18 0 0)",
-  muted: "oklch(0.48 0 0)",
-  line: "oklch(0.84 0 0)",
-  card: "oklch(0.995 0 0)",
-  donated: "oklch(0.22 0 0)",
-  rescued: "oklch(0.45 0 0)",
+  ink: "#1c3029",
+  muted: "#65716a",
+  line: "#d9d8ce",
+  card: "#fffaf2",
+  donated: "#1c3029",
+  rescued: "#df7d73",
 };
 
 export function useChartTheme(): ChartTheme {
+  const { theme } = useTheme();
   const [colors, setColors] = useState<ChartTheme>(FALLBACK);
 
   useEffect(() => {
     const s = getComputedStyle(document.documentElement);
     const read = (name: string, fallback: string) => s.getPropertyValue(name).trim() || fallback;
     setColors({
-      ink: read("--color-foreground", FALLBACK.ink),
-      muted: read("--color-muted", FALLBACK.muted),
-      line: read("--color-border", FALLBACK.line),
-      card: read("--color-card", FALLBACK.card),
-      donated: read("--color-primary", FALLBACK.donated),
-      rescued: read("--color-accent", FALLBACK.rescued),
+      ink: read("--foreground", FALLBACK.ink),
+      muted: read("--muted", FALLBACK.muted),
+      line: read("--border", FALLBACK.line),
+      card: read("--card", FALLBACK.card),
+      donated: read("--secondary", FALLBACK.donated),
+      rescued: read("--accent", FALLBACK.rescued),
     });
-  }, []);
+  }, [theme]);
 
   return colors;
 }
