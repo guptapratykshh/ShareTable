@@ -1,13 +1,13 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ButtonLink, EmptyState, PageHeader } from "../../components/PageChrome";
-import { useAuth } from "../../context/AuthContext";
+import { Button } from "../../components/Form";
+import { ButtonLink, EmptyState, IconTile, PageHeader, SectionToolbar } from "../../components/PageChrome";
+import { homeFor, useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
 import { formatDateTime } from "../../utils/format";
 
 const EMPTY_COPY = {
   DONOR: {
-    body: "When someone claims your listing, pickup updates will show up here.",
+    body: "New activity will appear here as your food finds a home.",
     action: { to: "/donor/donate", label: "Donate surplus food" },
   },
   RECIPIENT: {
@@ -20,47 +20,67 @@ const EMPTY_COPY = {
   },
 } as const;
 
+function notificationIcon(type: string, title: string) {
+  const key = `${type} ${title}`.toLowerCase();
+  if (key.includes("pickup") || key.includes("picked") || key.includes("completed")) return "✓";
+  if (key.includes("claim")) return "↗";
+  return "•";
+}
+
+function isSuccessTone(type: string, title: string) {
+  const key = `${type} ${title}`.toLowerCase();
+  return key.includes("pickup") || key.includes("picked") || key.includes("completed");
+}
+
 export function NotificationsPage() {
   const { user } = useAuth();
-  const { items, markAllRead } = useNotifications();
+  const { items, unreadCount, markAllRead } = useNotifications();
   const empty = EMPTY_COPY[user?.role ?? "ADMIN"];
-
-  useEffect(() => {
-    markAllRead().catch(() => undefined);
-  }, [markAllRead]);
+  const dashboard = user ? homeFor(user.role) : "/";
 
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Alerts"
+        eyebrow="Stay in the loop"
         title="Notifications"
-        subtitle="New alerts also appear as a pop-up on any screen. Opening this tab marks them read."
+        subtitle="Updates about claims, pickups, and listings that need your attention."
+        actions={
+          items.length > 0 ? (
+            <Button type="button" variant="outline" className="min-h-10 px-4 text-[11px]" onClick={() => markAllRead().catch(() => undefined)}>
+              Mark all as read
+            </Button>
+          ) : undefined
+        }
       />
-      <div className="space-y-3">
-        {items.map((n) => (
-          <article
-            key={n.id}
-            className={`rounded-[1.25rem] border border-border p-4 ${n.isRead ? "bg-card" : "bg-secondary"}`}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <h2 className="font-semibold">{n.title}</h2>
-              <span className="text-xs text-muted">{formatDateTime(n.createdAt)}</span>
-            </div>
-            <pre className="mt-2 whitespace-pre-wrap font-sans text-sm text-muted">{n.message}</pre>
-            <div className="mt-3 flex gap-3 text-sm">
-              {n.donationId && (
-                <Link to={`/donation/${n.donationId}`} className="font-medium text-primary">
-                  View donation
-                </Link>
-              )}
-              {n.claimId && (
-                <Link to={`/claims/${n.claimId}`} className="font-medium text-primary">
-                  View claim
-                </Link>
-              )}
-            </div>
-          </article>
-        ))}
+      {items.length > 0 && (
+        <SectionToolbar label="Recent updates" meta={unreadCount > 0 ? undefined : "All caught up"}>
+          {unreadCount > 0 ? (
+            <span className="rounded-full bg-accent/17 px-2.5 py-1 text-[10px] font-extrabold text-accent">{unreadCount} unread</span>
+          ) : null}
+        </SectionToolbar>
+      )}
+      <div className="grid gap-2.5">
+        {items.map((n) => {
+          const success = isSuccessTone(n.type, n.title);
+          return (
+            <article key={n.id} className="relative flex gap-4 rounded-[18px] border border-border bg-card px-6 py-5">
+              <IconTile accent={success}>{notificationIcon(n.type, n.title)}</IconTile>
+              <div className="min-w-0 flex-1 pr-4">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h2 className="display text-[19px] font-semibold">{n.title}</h2>
+                  <time className="text-[11px] text-muted">{formatDateTime(n.createdAt)}</time>
+                </div>
+                <p className="mt-2 whitespace-pre-wrap text-[13px] leading-6 text-muted">{n.message}</p>
+                <div className="mt-3.5 flex flex-wrap gap-4 text-[11px] font-extrabold text-accent">
+                  {n.donationId && <Link to={`/donation/${n.donationId}`}>View donation</Link>}
+                  {n.claimId && <Link to={`/claims/${n.claimId}`}>View claim</Link>}
+                  <Link to={dashboard}>Open dashboard</Link>
+                </div>
+              </div>
+              {!n.isRead && <span className="absolute right-6 top-6 size-1.5 rounded-full bg-accent" aria-label="Unread notification" />}
+            </article>
+          );
+        })}
       </div>
       {items.length === 0 && (
         <EmptyState
