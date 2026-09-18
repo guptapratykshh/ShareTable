@@ -226,12 +226,12 @@ describe("operational reliability", () => {
 });
 
 describe("admin heatmap privacy", () => {
-  it("returns snapped coordinates without addresses or user ids", async () => {
+  it("returns snapped coordinates and named areas without user ids", async () => {
     const admin = await login("admin@foodrescue.demo");
     const res = await request(app).get("/api/admin/heatmap?range=30d").set("Authorization", `Bearer ${admin}`);
     expect(res.status).toBe(200);
     expect(res.body.privacy).toMatch(/200 m/);
-    expect(JSON.stringify(res.body)).not.toMatch(/College Cafeteria/);
+    expect(res.body.privacy).toMatch(/address|neighborhood/i);
     const live = res.body.live as { lat: number; lng: number; liveStateLabel: string }[];
     expect(live.length).toBeGreaterThan(0);
     expect(live.some((m) => m.liveStateLabel)).toBe(true);
@@ -239,6 +239,8 @@ describe("admin heatmap privacy", () => {
     expect(exact).toBeUndefined();
     const cell = res.body.cells[0];
     expect(cell.areaId).toBeTruthy();
+    expect(cell.placeName).toBeTruthy();
+    expect(cell.placeName).not.toMatch(/^\d+\.\d+,\d+\.\d+$/);
     expect(cell).not.toHaveProperty("address");
     expect(cell).not.toHaveProperty("userId");
   });
