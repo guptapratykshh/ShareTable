@@ -32,8 +32,15 @@ export function compressImage(file: File, maxWidth = 1200, quality = 0.82): Prom
 
 export async function uploadPhoto(file: File): Promise<string> {
   const blob = await compressImage(file);
-  const body = new FormData();
-  body.append("file", new File([blob], "photo.jpg", { type: "image/jpeg" }));
-  const data = await api<{ url: string }>("/api/uploads/photo", { method: "POST", body });
-  return data.url;
+  const data = await api<{ uploadUrl: string; publicUrl: string }>("/api/uploads/photo-url", {
+    method: "POST",
+    body: JSON.stringify({ contentType: "image/jpeg" }),
+  });
+  const put = await fetch(data.uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": "image/jpeg" },
+    body: blob,
+  });
+  if (!put.ok) throw new Error("Could not upload photo.");
+  return data.publicUrl;
 }
