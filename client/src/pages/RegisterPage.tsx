@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AuthShell, Button, Field, inputClass } from "../components/Form";
 import { LocationPicker } from "../components/LocationPicker";
 import { useAuth } from "../context/AuthContext";
@@ -11,7 +11,12 @@ const DEMO = { lat: 12.9352, lng: 77.6245 };
 export function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [role, setRole] = useState<"DONOR" | "RECIPIENT">("DONOR");
+  const [params] = useSearchParams();
+  const [role, setRole] = useState<"DONOR" | "RECIPIENT">(params.get("role") === "RECIPIENT" ? "RECIPIENT" : "DONOR");
+  useEffect(() => {
+    const next = params.get("role");
+    if (next === "DONOR" || next === "RECIPIENT") setRole(next);
+  }, [params]);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [location, setLocation] = useState(DEMO);
@@ -57,28 +62,43 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthShell title="Create an account" subtitle="Register as a donor or as a nearby recipient organization or community member.">
-      <form className="space-y-4" onSubmit={onSubmit}>
-        <div className="grid grid-cols-2 gap-2 rounded-xl bg-secondary p-1">
+    <AuthShell
+      asideTitle={
+        <>
+          Make every meal
+          <br />
+          <em className="not-italic text-accent">matter.</em>
+        </>
+      }
+      asideBody="Join a local network helping good food reach the people who can use it."
+      cardEyebrow="Create your account"
+      title="Start sharing with your community."
+      subtitle="Register as a donor or nearby recipient."
+      switchLabel="Already registered?"
+      switchTo="/login"
+      switchCta="Log in"
+    >
+      <form className="grid gap-4" onSubmit={onSubmit}>
+        <div className="mb-1 grid grid-cols-2 gap-1 rounded-xl bg-secondary p-1">
           {(["DONOR", "RECIPIENT"] as const).map((r) => (
             <button
               key={r}
               type="button"
               onClick={() => setRole(r)}
-              className={`rounded-full py-2.5 text-sm font-semibold ${role === r ? "bg-card text-foreground shadow-sm" : "text-muted"}`}
+              className={`rounded-lg px-2 py-2.5 text-[11px] font-extrabold ${role === r ? "bg-card text-foreground shadow-sm" : "text-muted"}`}
             >
               {r === "DONOR" ? "I have surplus food" : "I can collect food"}
             </button>
           ))}
         </div>
         <Field label="Full name">
-          <input className={inputClass} value={form.name} onChange={(e) => set("name", e.target.value)} required />
+          <input className={inputClass} autoComplete="name" placeholder="Your name" value={form.name} onChange={(e) => set("name", e.target.value)} required />
         </Field>
         <Field label="Email">
-          <input className={inputClass} type="email" value={form.email} onChange={(e) => set("email", e.target.value)} required />
+          <input className={inputClass} type="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={(e) => set("email", e.target.value)} required />
         </Field>
         <Field label="Phone">
-          <input className={inputClass} value={form.phone} onChange={(e) => set("phone", e.target.value)} required />
+          <input className={inputClass} type="tel" autoComplete="tel" placeholder="Your phone number" value={form.phone} onChange={(e) => set("phone", e.target.value)} required />
         </Field>
         <Field label="Password">
           <input
@@ -88,6 +108,7 @@ export function RegisterPage() {
             onChange={(e) => set("password", e.target.value)}
             minLength={8}
             autoComplete="new-password"
+            placeholder="Enter your password"
             required
           />
         </Field>
@@ -99,6 +120,7 @@ export function RegisterPage() {
             onChange={(e) => set("confirmPassword", e.target.value)}
             minLength={8}
             autoComplete="new-password"
+            placeholder="Repeat your password"
             required
           />
         </Field>
@@ -133,11 +155,14 @@ export function RegisterPage() {
         />
         {error && <p className="text-sm text-alert">{error}</p>}
         <Button disabled={pending} className="w-full">
-          {pending ? "Creating account…" : "Register"}
+          {pending ? "Creating account…" : "Create account"} <span aria-hidden>→</span>
         </Button>
       </form>
-      <p className="mt-4 text-sm text-muted">
-        Already registered? <Link to="/login" className="font-medium text-primary">Log in</Link>
+      <p className="mt-6 text-center text-xs text-muted">
+        Already have an account?{" "}
+        <Link to="/login" className="font-extrabold text-accent">
+          Log in
+        </Link>
       </p>
     </AuthShell>
   );
