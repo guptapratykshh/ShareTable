@@ -92,6 +92,7 @@ export function serializeDonation(
     userId: string;
     distanceKm?: number;
     hasClaim?: boolean;
+    exactLocation?: boolean;
   },
 ) {
   const id = docId(donation);
@@ -136,7 +137,7 @@ export function serializeDonation(
     address: revealPickup ? donation.address : undefined,
     pickupInstructions: revealPickup ? donation.pickupInstructions : undefined,
     location:
-      donation.location && (isOwner || Boolean(opts.hasClaim))
+      donation.location && (isOwner || Boolean(opts.hasClaim) || (isAdmin && opts.exactLocation))
         ? coords(donation.location)
         : donation.location && isAdmin
           ? coords(donation.location, true)
