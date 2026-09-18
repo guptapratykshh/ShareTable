@@ -33,8 +33,20 @@ export function CheckEmailPage() {
 
   return (
     <AuthShell
+      asideTitle={
+        <>
+          Check
+          <br />
+          <em className="not-italic text-accent">your email.</em>
+        </>
+      }
+      asideBody="Open the confirmation link we sent, then log in. The link expires in 24 hours."
+      cardEyebrow="Almost there"
       title="Check your email"
-      subtitle="We sent a confirmation link. Open it, then log in. The link expires in 24 hours."
+      subtitle="We sent a confirmation link. Open it, then log in."
+      switchLabel="Already confirmed?"
+      switchTo="/login"
+      switchCta="Log in"
     >
       {email ? <p className="text-sm">Sent to <span className="font-medium">{email}</span>.</p> : null}
       {notice && <p className="mt-3 rounded-xl bg-primary/5 px-3 py-2 text-sm text-primary">{notice}</p>}
