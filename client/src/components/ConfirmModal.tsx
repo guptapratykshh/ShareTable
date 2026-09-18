@@ -35,7 +35,7 @@ export function ConfirmModal({
     <div className="fixed inset-0 z-[3000] flex items-center justify-center px-5">
       <button
         type="button"
-        className="absolute inset-0 bg-foreground/40"
+        className="absolute inset-0 bg-black/45"
         aria-label="Close"
         onClick={() => {
           if (!busy) onCancel();
