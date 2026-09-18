@@ -1,16 +1,6 @@
 export const ROLES = ["DONOR", "RECIPIENT", "ADMIN"] as const;
 export type Role = (typeof ROLES)[number];
 
-export const DEMO_LOGIN_EMAILS = [
-  "mess@foodrescue.demo",
-  "helpinghands@foodrescue.demo",
-  "admin@foodrescue.demo",
-] as const;
-
-export function isDemoLoginEmail(email: string) {
-  return (DEMO_LOGIN_EMAILS as readonly string[]).includes(email.trim().toLowerCase());
-}
-
 export const DONOR_TYPES = [
   "College Mess",
   "Restaurant",
