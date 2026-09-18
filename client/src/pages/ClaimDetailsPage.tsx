@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Button, Field, inputClass } from "../components/Form";
+import { PageHeader, PageLoading } from "../components/PageChrome";
 import { StatusBadge } from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
 import { api, ApiError } from "../services/api";
@@ -39,16 +40,21 @@ export function ClaimDetailsPage() {
     }
   }
 
-  if (!claim) return <p className="text-muted">{error || "Loading…"}</p>;
+  if (error && !claim) return <p className="text-alert">{error}</p>;
+  if (!claim) return <PageLoading label="Loading claim…" />;
   const donation = claim.donation;
   const canConfirm = user?.role === "DONOR" || user?.role === "ADMIN";
   const isCollector = user?.role === "RECIPIENT";
 
   return (
     <div className="mx-auto max-w-xl space-y-4">
-      <h1 className="display text-4xl font-semibold tracking-tight">{isCollector ? "Show this code at pickup" : "Confirm pickup"}</h1>
+      <PageHeader
+        eyebrow="Pickup"
+        title={isCollector ? "Show this code at pickup" : "Confirm pickup"}
+        subtitle={donation?.foodName}
+      />
       <StatusBadge status={claim.status} />
-      <div className="rounded-[1.5rem] border border-border bg-card p-6">
+      <div className="rounded-[1.5rem] border border-border bg-card p-6 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
         <p className="display text-4xl font-semibold tracking-tight">{claim.quantity}</p>
         <p className="text-muted">{isCollector ? "meals reserved for you" : "meals reserved"}</p>
         {claim.claimCode && (
