@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DonationCard } from "../../components/DonationCard";
-import { EmptyState, PageHeader, PageLoading } from "../../components/PageChrome";
+import { ButtonLink, EmptyState, FilterPills, PageHeader, PageLoading, SectionToolbar } from "../../components/PageChrome";
 import { RescueMap, type RescueLiveMarker } from "../../components/RescueMap";
-import { StatCard } from "../../components/StatCard";
+import { MetricStrip } from "../../components/StatCard";
 import { api } from "../../services/api";
 import type { Claim, Donation } from "../../types";
 
@@ -24,6 +24,8 @@ type Heatmap = {
   surplusAreas: { name: string; meals: number }[];
 };
 
+type NearbyFilter = "all" | "urgent" | "expanded" | "normal";
+
 function groupDonations(donations: Donation[]) {
   const urgent = donations.filter((d) => d.urgencyBand === "CRITICAL");
   const expanded = donations.filter((d) => d.urgencyBand === "EXPANDED");
@@ -41,6 +43,7 @@ export function RecipientDashboard() {
   } | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<NearbyFilter>("all");
 
   useEffect(() => {
     Promise.all([
@@ -60,6 +63,12 @@ export function RecipientDashboard() {
   const groups = groupDonations(donations);
   const heatmap = stats?.heatmap;
   const maxSurplus = Math.max(1, ...(heatmap?.surplusAreas.map((a) => a.meals) ?? [1]));
+  const visible = useMemo(() => {
+    if (filter === "urgent") return groups.urgent;
+    if (filter === "expanded") return groups.expanded;
+    if (filter === "normal") return groups.normal;
+    return donations;
+  }, [donations, filter, groups.expanded, groups.normal, groups.urgent]);
 
   if (loading) return <PageLoading label="Loading nearby food…" />;
 
@@ -68,28 +77,32 @@ export function RecipientDashboard() {
       <PageHeader
         eyebrow="Recipient workspace"
         title="Nearby food"
-        subtitle="Active donations whose current rescue radius covers your registered location. Listings expiring soon appear first. Reliability is shown for operations only and never hides a listing."
+        subtitle="Active donations whose current rescue radius covers your registered location. Listings expiring soon appear first."
+        actions={
+          <ButtonLink to="/recipient/claims">
+            My claims <span aria-hidden>→</span>
+          </ButtonLink>
+        }
       />
       {stats && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard label="Meals you picked up" value={stats.mealsPickedUp} />
-          <StatCard label="Pickups pending" value={stats.activeClaims} />
-          <StatCard
-            label="Operational reliability"
-            value={stats.reliability?.score == null ? "-" : stats.reliability.score}
-            hint={
-              stats.reliability?.sampleSize
-                ? `${stats.reliability.sampleSize} claims · not a ranking`
-                : "Not enough pickup history yet"
-            }
-          />
-        </div>
+        <MetricStrip
+          items={[
+            { label: "Meals picked up", value: stats.mealsPickedUp },
+            { label: "Pickups pending", value: stats.activeClaims },
+            {
+              label: "Reliability",
+              value: stats.reliability?.score == null ? "—" : stats.reliability.score,
+              hint: stats.reliability?.sampleSize ? `${stats.reliability.sampleSize} claims` : "Not enough history yet",
+            },
+          ]}
+        />
       )}
       {heatmap && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="overflow-hidden rounded-[1.5rem] border border-border bg-card">
+          <div className="overflow-hidden rounded-[20px] border border-border bg-card">
             <div className="p-4 pb-2">
-              <h2 className="font-semibold">Live rescue heatmap</h2>
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">Live map</p>
+              <h2 className="display mt-1 text-[25px]">Rescue heatmap</h2>
             </div>
             <div className="h-64">
               <RescueMap center={heatmap.center} markers={heatmap.live} />
@@ -107,9 +120,10 @@ export function RecipientDashboard() {
             </div>
             <p className="px-4 py-3 text-xs text-muted">{heatmap.privacy}</p>
           </div>
-          <section className="rounded-[1.5rem] border border-border bg-card p-4">
-            <h2 className="font-semibold uppercase tracking-wide text-primary">High surplus areas</h2>
-            <ul className="mt-4 space-y-3">
+          <section className="rounded-[20px] border border-border bg-card p-6">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">Neighborhood</p>
+            <h2 className="display mt-1 text-[25px]">High surplus areas</h2>
+            <ul className="mt-6 space-y-3">
               {heatmap.surplusAreas.map((area) => (
                 <li key={area.name} className="flex items-center gap-3">
                   <div className="h-3 flex-1 overflow-hidden rounded-full bg-secondary">
@@ -130,42 +144,34 @@ export function RecipientDashboard() {
       )}
       {error && <p className="text-alert">{error}</p>}
 
-      {groups.urgent.length > 0 && (
-        <section>
-          <h2 className="mb-3 font-semibold">Urgent rescue</h2>
+      <div id="listings" className="space-y-4">
+        <SectionToolbar label="Available now" meta={`${visible.length} listing${visible.length === 1 ? "" : "s"}`}>
+          <FilterPills
+            value={filter}
+            onChange={setFilter}
+            options={[
+              { id: "all", label: "All" },
+              { id: "urgent", label: "Urgent" },
+              { id: "expanded", label: "Expanded" },
+              { id: "normal", label: "Normal" },
+            ]}
+          />
+        </SectionToolbar>
+        {visible.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {groups.urgent.map((d) => (
+            {visible.map((d) => (
               <DonationCard key={d.id} donation={d} />
             ))}
           </div>
-        </section>
-      )}
-      {groups.expanded.length > 0 && (
-        <section>
-          <h2 className="mb-3 font-semibold">Rescue expanded</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {groups.expanded.map((d) => (
-              <DonationCard key={d.id} donation={d} />
-            ))}
-          </div>
-        </section>
-      )}
-      {groups.normal.length > 0 && (
-        <section>
-          <h2 className="mb-3 font-semibold">Normal rescue</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {groups.normal.map((d) => (
-              <DonationCard key={d.id} donation={d} />
-            ))}
-          </div>
-        </section>
-      )}
-      {donations.length === 0 && !error && (
-        <EmptyState
-          title="Nothing nearby right now"
-          body="No active donations in range. New posts appear here and in notifications."
-        />
-      )}
+        ) : (
+          !error && (
+            <EmptyState
+              title="Nothing nearby right now"
+              body="No active donations in range. New posts appear here and in notifications."
+            />
+          )
+        )}
+      </div>
     </div>
   );
 }
