@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "../config.js";
 import { User } from "../models/User.js";
-import { isDemoLoginEmail, type Role } from "../types.js";
+import type { Role } from "../types.js";
 import { AppError } from "../utils.js";
 
 export interface AuthUser {
@@ -43,7 +43,7 @@ export async function requireAuth(req: AuthedRequest, _res: Response, next: Next
     const user = await User.findById(payload.sub);
     if (!user) throw new AppError("Account not found.", 401);
     if (user.isFlagged) throw new AppError("This account has been restricted. Contact an administrator.", 403);
-    if (user.emailVerified === false && !isDemoLoginEmail(user.email)) {
+    if (user.emailVerified === false) {
       throw new AppError("Verify your email before logging in.", 403);
     }
 
