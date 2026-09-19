@@ -1,9 +1,12 @@
 import { useState, type FormEvent, type ReactNode } from "react";
+import { Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { DateTimePicker } from "../../components/DateTimePicker";
 import { Button, Field, inputClass } from "../../components/Form";
 import { LocationPicker } from "../../components/LocationPicker";
 import { api, ApiError } from "../../services/api";
 import { COMMON_ALLERGENS, FOOD_CATEGORIES } from "../../types";
+import { parseLocalDateTime, toLocalDateTime, validateDonationTimes } from "../../utils/donationTimes";
 
 const STEPS = [
   { id: 0, label: "01 Essentials" },
@@ -79,6 +82,14 @@ export function DonatePage() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  const now = new Date();
+  const preparedAtDate = parseLocalDateTime(form.preparedAt);
+  const preparedMin = toLocalDateTime(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
+  const preparedMax = toLocalDateTime(now);
+  const bestBeforeMin = toLocalDateTime(
+    preparedAtDate && preparedAtDate.getTime() >= now.getTime() ? new Date(preparedAtDate.getTime() + 60_000) : now,
+  );
+
   function essentialsReady() {
     if (!form.foodName.trim() || !form.description.trim()) {
       setError("Fill in the food name and a short description.");
@@ -99,6 +110,11 @@ export function DonatePage() {
   function safetyReady() {
     if (!form.storageCondition.trim() || !form.preparedAt || !form.bestBefore) {
       setError("Fill in storage, prepared time, and best before.");
+      return false;
+    }
+    const timeError = validateDonationTimes(form.preparedAt, form.bestBefore);
+    if (timeError) {
+      setError(timeError);
       return false;
     }
     return true;
@@ -163,7 +179,7 @@ export function DonatePage() {
       setStep(0);
       return;
     }
-    if (!pickupReady()) return;
+    if (!safetyReady() || !pickupReady()) return;
     setPending(true);
     try {
       const data = await api<{ donation: { id: string }; notifiedRecipientCount: number }>(
@@ -242,7 +258,7 @@ export function DonatePage() {
                   <textarea className={inputClass} rows={3} value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="What it is, how it was kept, and who it is for" required />
                 </Field>
                 <button type="button" onClick={enhance} className="mt-2 text-xs font-extrabold text-accent">
-                  Improve description with AI (optional)
+                  Improve description with AI
                 </button>
                 {aiHint && <p className="mt-1 text-[11px] text-muted">{aiHint}</p>}
               </div>
@@ -313,10 +329,12 @@ export function DonatePage() {
                         <button
                           key={name}
                           type="button"
-                          className="rounded-full border border-border bg-secondary px-3 py-1 text-xs"
+                          aria-label={`Remove ${name}`}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs"
                           onClick={() => toggleAllergen(name)}
                         >
-                          {name} · remove
+                          {name}
+                          <Trash2 size={12} className="text-alert" aria-hidden />
                         </button>
                       ))}
                   </div>
@@ -326,12 +344,25 @@ export function DonatePage() {
                 <input className={inputClass} value={form.storageCondition} onChange={(e) => set("storageCondition", e.target.value)} placeholder="e.g. Covered, in insulated containers" required />
               </Field>
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Prepared at">
-                  <input className={inputClass} type="datetime-local" value={form.preparedAt} onChange={(e) => set("preparedAt", e.target.value)} required />
-                </Field>
-                <Field label="Best before">
-                  <input className={inputClass} type="datetime-local" value={form.bestBefore} onChange={(e) => set("bestBefore", e.target.value)} required />
-                </Field>
+                <div className="grid gap-1.5 text-xs font-extrabold text-foreground">
+                  Prepared at
+                  <DateTimePicker
+                    dateLocked
+                    min={preparedMin}
+                    max={preparedMax}
+                    value={form.preparedAt}
+                    onChange={(preparedAt) => {
+                      set("preparedAt", preparedAt);
+                      if (form.bestBefore && validateDonationTimes(preparedAt, form.bestBefore)) {
+                        set("bestBefore", "");
+                      }
+                    }}
+                  />
+                </div>
+                <div className="grid gap-1.5 text-xs font-extrabold text-foreground">
+                  Best before
+                  <DateTimePicker min={bestBeforeMin} value={form.bestBefore} onChange={(bestBefore) => set("bestBefore", bestBefore)} />
+                </div>
               </div>
             </div>
           </Section>
