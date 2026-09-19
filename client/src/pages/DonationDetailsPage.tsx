@@ -116,7 +116,7 @@ export function DonationDetailsPage() {
   }
 
   if (error && !donation) return <p className="text-alert">{error}</p>;
-  if (!donation) return <PageLoading label="Loading donation…" />;
+  if (!donation) return <PageLoading />;
 
   const hasOpenReservation =
     Boolean(myClaim) && ["PICKUP_PENDING", "CLAIMED"].includes(myClaim!.status);
@@ -212,7 +212,7 @@ export function DonationDetailsPage() {
       <aside className="space-y-4">
         {donation.location && (
           <div className="h-56 overflow-hidden rounded-2xl border border-border">
-            <MapContainer center={[donation.location.lat, donation.location.lng]} zoom={15} className="h-full w-full">
+            <MapContainer attributionControl={false} center={[donation.location.lat, donation.location.lng]} zoom={15} className="h-full w-full">
               <ThemedTileLayer />
               <Marker position={[donation.location.lat, donation.location.lng]} icon={icon} />
             </MapContainer>
