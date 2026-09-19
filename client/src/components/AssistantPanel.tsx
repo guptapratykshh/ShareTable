@@ -24,14 +24,14 @@ export function AssistantPanel() {
   const [messages, setMessages] = useState<ChatLine[]>([
     {
       role: "assistant",
-      content: "I can explain pickup rules, check your open pickup, or send a late / instructions / arrived update after you confirm it.",
+      content: "I can check pickup details and help with delays, arrival, directions, or messages to the other participant. I’ll show you a preview and ask you to confirm before sending.",
     },
   ]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [messages, open]);
+  }, [messages, open, busy]);
 
   const pendingActionId = [...messages].reverse().find((m) => m.pendingActionId)?.pendingActionId;
 
@@ -42,21 +42,24 @@ export function AssistantPanel() {
     setDraft("");
     setError("");
     setBusy(true);
-    const history = messages
-      .filter((m) => m.content)
-      .slice(-8)
-      .map(({ role, content }) => ({ role, content }));
     setMessages((prev) => [...prev, { role: "user", content: text }]);
     try {
+      const history = messages
+        .filter((m) => m.content)
+        .slice(-8)
+        .map(({ role, content }) => ({ role, content }));
       const data = await api<AssistantResponse>("/api/assistant", {
         method: "POST",
-        body: JSON.stringify({ message: text, history }),
+        body: JSON.stringify({ message: text, history, pendingActionId: pendingActionId ?? null }),
       });
       setMessages((prev) => [
-        ...prev,
+        ...prev.map((m) => ({ ...m, pendingActionId: undefined })),
         { role: "assistant", content: data.reply, pendingActionId: data.pendingActionId },
       ]);
     } catch (err) {
+      if (err instanceof ApiError && [400, 403, 404, 409].includes(err.status)) {
+        setMessages(prev => prev.map(m => ({ ...m, pendingActionId: undefined })));
+      }
       setError(err instanceof ApiError ? err.message : "Could not reach the assistant.");
     } finally {
       setBusy(false);
@@ -77,6 +80,9 @@ export function AssistantPanel() {
         { role: "assistant", content: data.reply },
       ]);
     } catch (err) {
+      if (err instanceof ApiError && [400, 403, 404, 409].includes(err.status)) {
+        setMessages(prev => prev.map(m => ({ ...m, pendingActionId: undefined })));
+      }
       setError(err instanceof ApiError ? err.message : "Could not send that update.");
     } finally {
       setBusy(false);
@@ -97,6 +103,9 @@ export function AssistantPanel() {
         { role: "assistant", content: data.reply },
       ]);
     } catch (err) {
+      if (err instanceof ApiError && [400, 403, 404, 409].includes(err.status)) {
+        setMessages(prev => prev.map(m => ({ ...m, pendingActionId: undefined })));
+      }
       setError(err instanceof ApiError ? err.message : "Could not cancel.");
     } finally {
       setBusy(false);
@@ -118,10 +127,23 @@ export function AssistantPanel() {
           </div>
           <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3 text-sm">
             {messages.map((line, i) => (
-              <div key={`${line.role}-${i}`} className={line.role === "user" ? "ml-8 rounded-2xl bg-primary px-3 py-2 text-primary-foreground" : "mr-6 rounded-2xl bg-secondary px-3 py-2"}>
+              <div key={`${line.role}-${i}`} className={line.role === "user" ? "ml-8 rounded-2xl bg-primary px-3 py-2 text-primary-foreground" : "mr-6 whitespace-pre-line rounded-2xl bg-secondary px-3 py-2"}>
                 {line.content}
               </div>
             ))}
+            {busy && (
+              <div
+                className="mr-6 rounded-2xl bg-secondary px-3 py-2"
+                aria-live="polite"
+                aria-label="Assistant is typing"
+              >
+                <span className="assistant-typing">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+              </div>
+            )}
             {pendingActionId && (
               <div className="flex gap-2">
                 <Button type="button" onClick={confirm} disabled={busy} className="px-4 py-2">
@@ -141,6 +163,8 @@ export function AssistantPanel() {
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Ask or send an update…"
+              aria-label="Message the ShareTable Assistant"
+              maxLength={500}
               disabled={busy}
             />
             <Button type="submit" disabled={busy || !draft.trim()} className="px-3 py-2" aria-label="Send">
