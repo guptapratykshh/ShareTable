@@ -25,7 +25,7 @@ export function RescueMap({
   markers: RescueLiveMarker[];
 }) {
   return (
-    <MapContainer center={[center.lat, center.lng]} zoom={13} className="h-full w-full">
+    <MapContainer attributionControl={false} center={[center.lat, center.lng]} zoom={13} className="h-full w-full">
       <ThemedTileLayer />
       {markers.map((d) => (
         <CircleMarker
