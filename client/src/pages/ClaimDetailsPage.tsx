@@ -41,7 +41,7 @@ export function ClaimDetailsPage() {
   }
 
   if (error && !claim) return <p className="text-alert">{error}</p>;
-  if (!claim) return <PageLoading label="Loading claim…" />;
+  if (!claim) return <PageLoading />;
   const donation = claim.donation;
   const canConfirm = user?.role === "DONOR" || user?.role === "ADMIN";
   const isCollector = user?.role === "RECIPIENT";
