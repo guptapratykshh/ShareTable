@@ -11,7 +11,7 @@ export function bedrockRecentlyOk(windowMs = 15 * 60_000) {
   return lastOkAt > 0 && Date.now() - lastOkAt < windowMs;
 }
 
-export async function converseText(prompt: string, maxTokens = 300): Promise<string> {
+export async function converseBedrock(prompt: string, maxTokens = 300): Promise<string> {
   if (!config.bedrockModelId) throw new Error("Bedrock model not configured");
   const client = new BedrockRuntimeClient({ region: config.awsRegion });
   const response = await client.send(
