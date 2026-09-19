@@ -210,8 +210,11 @@ describe("donor intelligence", () => {
     const res = await request(app).get("/api/donor/patterns").set("Authorization", `Bearer ${donor}`);
     expect(res.status).toBe(200);
     expect(res.body.ready).toBe(true);
-    expect(res.body.insights.some((i: { body: string }) => i.body.includes("recurring pattern"))).toBe(true);
-    expect(res.body.insights.some((i: { body: string }) => i.body.toLowerCase().includes("friday"))).toBe(true);
+    expect(res.body.analysis?.sections?.length).toBeGreaterThan(0);
+    const friday = (res.body.byDay as { day: string; meals: number }[]).find((row) => row.day === "Friday");
+    const analysisText = `${res.body.analysis?.title ?? ""} ${res.body.analysis?.summary ?? ""}`.toLowerCase();
+    expect(friday && friday.meals > 0).toBe(true);
+    expect(analysisText).toContain("friday");
   });
 });
 
