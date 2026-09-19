@@ -126,3 +126,29 @@ export const COMMON_ALLERGENS = [
   "Mustard",
   "Sulphites",
 ] as const;
+
+export type PatternSection = { heading: string; body: string };
+
+export type PatternAnalysis = {
+  title: string;
+  summary: string;
+  sections: PatternSection[];
+  source: "llm" | "stats";
+};
+
+export type DonorPatterns = {
+  ready: boolean;
+  observed: number;
+  minDonations: number;
+  weeklyAverage?: number;
+  mealsDonated?: number;
+  mealsRescued?: number;
+  mealsExpired?: number;
+  rescueRate?: number;
+  averageListingSize?: number;
+  analysis?: PatternAnalysis | null;
+  insights: { title: string; body: string; explanation?: string; facts: Record<string, string | number> }[];
+  byDay: { day: string; meals: number; count: number; average: number }[];
+  byTime: { period: string; meals: number; count: number }[];
+  byCategory: { category: string; meals: number; share: number }[];
+};
