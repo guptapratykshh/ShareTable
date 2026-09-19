@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { DonationCard } from "../../components/DonationCard";
-import { ButtonLink, EmptyState, FilterPills, PageHeader, PageLoading, SectionToolbar } from "../../components/PageChrome";
+import { ButtonLink, CardList, EmptyState, FilterPills, PageHeader, PageLoading, SectionToolbar } from "../../components/PageChrome";
 import { RescueMap, type RescueLiveMarker } from "../../components/RescueMap";
 import { MetricStrip } from "../../components/StatCard";
 import { api } from "../../services/api";
-import type { Claim, Donation } from "../../types";
+import type { Donation } from "../../types";
 
 type Reliability = {
   score: number | null;
@@ -48,7 +48,7 @@ export function RecipientDashboard() {
   useEffect(() => {
     Promise.all([
       api<{ donations: Donation[] }>("/api/donations/nearby"),
-      api<{ mealsPickedUp: number; activeClaims: number; reliability: Reliability; recentClaims: Claim[]; heatmap: Heatmap }>(
+      api<{ mealsPickedUp: number; activeClaims: number; reliability: Reliability; heatmap: Heatmap }>(
         "/api/dashboard/recipient",
       ),
     ])
@@ -70,13 +70,17 @@ export function RecipientDashboard() {
     return donations;
   }, [donations, filter, groups.expanded, groups.normal, groups.urgent]);
 
-  if (loading) return <PageLoading label="Loading nearby food…" />;
+  if (loading) return <PageLoading />;
 
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow="Recipient workspace"
-        title="Nearby food"
+        title={
+          <>
+            Nearby <em className="text-accent not-italic">food</em>
+          </>
+        }
         subtitle="Active donations whose current rescue radius covers your registered location. Listings expiring soon appear first."
         actions={
           <ButtonLink to="/recipient/claims">
@@ -102,7 +106,9 @@ export function RecipientDashboard() {
           <div className="overflow-hidden rounded-[20px] border border-border bg-card">
             <div className="p-4 pb-2">
               <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">Live map</p>
-              <h2 className="display mt-1 text-[25px]">Rescue heatmap</h2>
+              <h2 className="display mt-1 text-[25px]">
+                Rescue <em className="text-accent not-italic">heatmap</em>
+              </h2>
             </div>
             <div className="h-64">
               <RescueMap center={heatmap.center} markers={heatmap.live} />
@@ -122,13 +128,15 @@ export function RecipientDashboard() {
           </div>
           <section className="rounded-[20px] border border-border bg-card p-6">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">Neighborhood</p>
-            <h2 className="display mt-1 text-[25px]">High surplus areas</h2>
+            <h2 className="display mt-1 text-[25px]">
+              High surplus <em className="text-accent not-italic">areas</em>
+            </h2>
             <ul className="mt-6 space-y-3">
               {heatmap.surplusAreas.map((area) => (
                 <li key={area.name} className="flex items-center gap-3">
                   <div className="h-3 flex-1 overflow-hidden rounded-full bg-secondary">
                     <div
-                      className="h-full rounded-full bg-primary"
+                      className="h-full rounded-full bg-accent"
                       style={{ width: `${Math.max(8, (area.meals / maxSurplus) * 100)}%` }}
                     />
                   </div>
@@ -158,11 +166,11 @@ export function RecipientDashboard() {
           />
         </SectionToolbar>
         {visible.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <CardList>
             {visible.map((d) => (
               <DonationCard key={d.id} donation={d} />
             ))}
-          </div>
+          </CardList>
         ) : (
           !error && (
             <EmptyState
