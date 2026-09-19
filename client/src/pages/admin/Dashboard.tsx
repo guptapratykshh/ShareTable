@@ -142,7 +142,7 @@ export function AdminDashboard() {
   }, []);
 
   if (error) return <p className="text-alert">{error}</p>;
-  if (!stats) return <PageLoading label="Loading impact…" />;
+  if (!stats) return <PageLoading />;
 
   const strongest = heatmap?.cells.slice().sort((a, b) => b.mealsRescued - a.mealsRescued)[0];
   const strongestName = stats.mostActiveDonors[0]?.name || strongest?.placeName;
@@ -157,7 +157,11 @@ export function AdminDashboard() {
     <div className="space-y-5 pb-6">
       <PageHeader
         eyebrow="Admin overview"
-        title="ShareTable impact"
+        title={
+          <>
+            ShareTable <em className="text-accent not-italic">impact</em>
+          </>
+        }
         subtitle="A focused view of what is moving, what needs attention, and where rescue is working."
       />
 
@@ -329,7 +333,7 @@ export function AdminDashboard() {
             </select>
           </div>
           <div className="h-64">
-            <MapContainer center={[12.9352, 77.6245]} zoom={13} className="h-full w-full rounded-none">
+            <MapContainer attributionControl={false} center={[12.9352, 77.6245]} zoom={13} className="h-full w-full rounded-none">
               <ThemedTileLayer />
               {(heatmap?.live ?? []).map((d) => (
                 <CircleMarker
