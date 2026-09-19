@@ -12,6 +12,7 @@ import { createDonationListing } from "../services/listings.js";
 import { serializeClaim, serializeDonation } from "../services/serialize.js";
 import { reliabilityMap } from "../services/reliability.js";
 import { FOOD_CATEGORIES } from "../types.js";
+import { donationTimeError } from "../utils/donationTimes.js";
 import { AppError, point, routeId } from "../utils.js";
 
 export const donationsRouter = Router();
@@ -33,6 +34,11 @@ const createSchema = z.object({
     lng: z.coerce.number().gte(-180).lte(180),
   }),
   safetyConfirmed: z.literal(true),
+}).superRefine((data, ctx) => {
+  const message = donationTimeError(data.preparedAt, data.bestBefore);
+  if (message) {
+    ctx.addIssue({ code: "custom", message, path: ["bestBefore"] });
+  }
 });
 
 donationsRouter.post("/", requireAuth, requireRole("DONOR"), async (req: AuthedRequest, res, next) => {
