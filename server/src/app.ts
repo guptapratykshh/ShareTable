@@ -19,6 +19,7 @@ import { internalRouter } from "./routes/internal.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 import { publicImpact } from "./services/dashboard.js";
 import { bedrockRecentlyOk } from "./services/bedrock.js";
+import { llmHealth } from "./services/llm.js";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -68,6 +69,7 @@ export function createApp() {
       runtime: config.runtime,
       region: config.awsRegion,
       bedrock: bedrockRecentlyOk(),
+      llm: llmHealth(),
     });
   });
 
