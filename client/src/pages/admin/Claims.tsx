@@ -39,7 +39,7 @@ export function ClaimsPage() {
   }, [claims, query, status]);
 
   if (error) return <p className="text-alert">{error}</p>;
-  if (!claims) return <PageLoading label="Loading claims…" />;
+  if (!claims) return <PageLoading />;
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-6">
