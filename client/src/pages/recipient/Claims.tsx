@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ButtonLink, EmptyState, FilterPills, IconTile, PageHeader, PageLoading, SectionToolbar } from "../../components/PageChrome";
+import { ArrowRight, Utensils } from "lucide-react";
+import { ButtonLink, CardList, EmptyState, FilterPills, PageHeader, PageLoading, SectionToolbar } from "../../components/PageChrome";
 import { MetricStrip } from "../../components/StatCard";
 import { StatusBadge } from "../../components/StatusBadge";
 import { api } from "../../services/api";
@@ -32,9 +33,7 @@ export function RecipientClaimsPage() {
     return claims;
   }, [claims, filter, picked]);
 
-  const featuredId = visible.find((c) => c.status === "CLAIMED" || c.status === "PICKUP_PENDING")?.id ?? visible[0]?.id;
-
-  if (loading) return <PageLoading label="Loading claims…" />;
+  if (loading) return <PageLoading />;
 
   return (
     <div className="space-y-8">
@@ -71,40 +70,43 @@ export function RecipientClaimsPage() {
           ]}
         />
       </SectionToolbar>
-      <div className="grid gap-2.5">
+      <CardList>
         {visible.map((c) => {
-          const featured = c.id === featuredId;
+          const open = c.status === "CLAIMED" || c.status === "PICKUP_PENDING";
           return (
-            <article
-              key={c.id}
-              className={`grid items-center gap-4 rounded-[18px] border bg-card px-6 py-5 sm:grid-cols-[auto_1fr_auto] ${
-                featured ? "border-accent/55 shadow-[0_0_0_1px_color-mix(in_srgb,var(--accent)_15%,transparent)]" : "border-border"
-              }`}
-            >
-              <IconTile accent={featured} className="size-11 rounded-[14px] text-lg">
-                ⌁
-              </IconTile>
-              <div>
-                <h2 className="display text-xl font-semibold">{c.donation?.foodName ?? "Donation"}</h2>
-                <p className="mt-1 text-xs text-muted">
+            <article key={c.id} className="flex items-center gap-3.5 py-3.5">
+              <div
+                className={`grid size-[37px] shrink-0 place-items-center rounded-lg ${
+                  open ? "bg-rescued/20 text-rescued" : "bg-secondary text-foreground"
+                }`}
+              >
+                <Utensils size={18} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="truncate text-[13px] font-semibold tracking-tight">{c.donation?.foodName ?? "Donation"}</h3>
+                  <StatusBadge status={c.status} />
+                </div>
+                <p className="mt-1.5 text-[10px] text-muted">
                   {c.quantity} meals · {formatDateTime(c.claimedAt)}
+                  {c.claimCode ? ` · Pickup code ${c.claimCode}` : ""}
                 </p>
-                {c.claimCode ? (
-                  <span className="mt-2.5 inline-flex rounded-md bg-secondary px-2 py-1 text-[11px] font-extrabold tracking-[0.08em]">
-                    PICKUP CODE {c.claimCode}
-                  </span>
-                ) : null}
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 sm:flex-col sm:items-end">
-                <StatusBadge status={c.status} />
-                <Link to={`/claims/${c.id}`} className="text-[11px] font-extrabold text-accent">
-                  View details →
-                </Link>
+              <div className="hidden min-w-[75px] gap-0.5 sm:grid">
+                <strong className="text-[13px]">{c.quantity}</strong>
+                <span className="text-[9px] text-muted">meals reserved</span>
               </div>
+              <Link
+                to={`/claims/${c.id}`}
+                aria-label="View claim"
+                className="grid size-[30px] shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"
+              >
+                <ArrowRight size={16} />
+              </Link>
             </article>
           );
         })}
-      </div>
+      </CardList>
       {claims.length === 0 && !error && (
         <EmptyState
           title="No claims yet"
