@@ -14,14 +14,25 @@ const icon = L.icon({
   iconAnchor: [12, 41],
 });
 
+const WAITING_CENTER = { lat: 12.9716, lng: 77.5946 };
+
 type Loc = { lat: number; lng: number };
 export type LocationValue = Loc & { address: string };
 
-function Recenter({ value }: { value: Loc }) {
+function shortAreaName(label: string) {
+  const parts = label
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length <= 3) return label;
+  return parts.slice(0, 3).join(", ");
+}
+
+function Recenter({ value, zoom }: { value: Loc; zoom: number }) {
   const map = useMap();
   useEffect(() => {
-    map.setView([value.lat, value.lng], map.getZoom());
-  }, [map, value.lat, value.lng]);
+    map.setView([value.lat, value.lng], zoom);
+  }, [map, value.lat, value.lng, zoom]);
   return null;
 }
 
@@ -40,24 +51,80 @@ export function LocationPicker({
   onChange,
   label = "Address",
   required = true,
+  autoLocate = false,
 }: {
   value: Loc;
   address: string;
   onChange: (next: LocationValue) => void;
   label?: string;
   required?: boolean;
+  autoLocate?: boolean;
 }) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const lastAppliedRef = useRef("");
   const biasRef = useRef(value);
+  const addressRef = useRef(address);
+  const onChangeRef = useRef(onChange);
+  const pickedRef = useRef(!autoLocate);
   biasRef.current = value;
+  addressRef.current = address;
+  onChangeRef.current = onChange;
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [hasPin, setHasPin] = useState(!autoLocate);
+  const [locating, setLocating] = useState(autoLocate);
+  const [locateDenied, setLocateDenied] = useState(false);
+
+  async function applyCoords(loc: Loc, ignoreIfPicked = false) {
+    if (ignoreIfPicked && pickedRef.current) return;
+    pickedRef.current = true;
+
+    setHasPin(true);
+    setLocating(false);
+    setLocateDenied(false);
+    setOpen(false);
+    setSuggestions([]);
+    let nextAddress = addressRef.current;
+    try {
+      const label = await reverseGeocode(loc.lat, loc.lng);
+      if (label) nextAddress = label;
+    } catch {
+      // Keep the typed address if reverse lookup fails.
+    }
+    lastAppliedRef.current = nextAddress;
+    onChangeRef.current({ ...loc, address: nextAddress });
+  }
+
+  useEffect(() => {
+    if (!autoLocate) return;
+    if (!navigator.geolocation) {
+      setLocating(false);
+      setLocateDenied(true);
+      return;
+    }
+    let cancelled = false;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        if (cancelled) return;
+        void applyCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }, true);
+      },
+      () => {
+        if (cancelled) return;
+        setLocating(false);
+        setLocateDenied(true);
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [autoLocate]);
 
   useEffect(() => {
     if (address.trim() === lastAppliedRef.current) {
@@ -110,24 +177,14 @@ export function LocationPicker({
   }, []);
 
   function applyPlace(place: PlaceSuggestion) {
+    pickedRef.current = true;
     lastAppliedRef.current = place.label;
+    setHasPin(true);
+    setLocating(false);
+    setLocateDenied(false);
     setOpen(false);
     setSuggestions([]);
     onChange({ lat: place.lat, lng: place.lng, address: place.label });
-  }
-
-  async function applyCoords(loc: Loc) {
-    setOpen(false);
-    setSuggestions([]);
-    let nextAddress = address;
-    try {
-      const label = await reverseGeocode(loc.lat, loc.lng);
-      if (label) nextAddress = label;
-    } catch {
-      // Keep the typed address if reverse lookup fails.
-    }
-    lastAppliedRef.current = nextAddress;
-    onChange({ ...loc, address: nextAddress });
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -147,6 +204,18 @@ export function LocationPicker({
   }
 
   const showList = Boolean(open && (loading || searchError || address.trim().length >= 3));
+  const namedArea = address.trim() ? shortAreaName(address.trim()) : "";
+  const hint = locating
+    ? "Asking for your location…"
+    : namedArea
+      ? namedArea
+      : locateDenied
+        ? "Location is blocked. Type a place or tap the map."
+        : hasPin
+          ? "Could not name this spot. Type the road or area."
+          : "Allow location, type a place, or tap the map.";
+  const mapCenter = hasPin ? value : WAITING_CENTER;
+  const mapZoom = hasPin ? 16 : 12;
 
   return (
     <div className="space-y-2" ref={rootRef}>
@@ -200,11 +269,11 @@ export function LocationPicker({
         )}
       </div>
       <div className="relative z-0 h-56 overflow-hidden rounded-[1.5rem] border border-border">
-        <MapContainer center={[value.lat, value.lng]} zoom={14} minZoom={11} maxZoom={17} className="h-full w-full" scrollWheelZoom>
+        <MapContainer attributionControl={false} center={[mapCenter.lat, mapCenter.lng]} zoom={mapZoom} minZoom={11} maxZoom={17} className="h-full w-full" scrollWheelZoom>
           <ThemedTileLayer />
-          <Marker position={[value.lat, value.lng]} icon={icon} />
-          <ClickCapture onPick={applyCoords} />
-          <Recenter value={value} />
+          {hasPin && <Marker position={[value.lat, value.lng]} icon={icon} />}
+          <ClickCapture onPick={(loc) => void applyCoords(loc)} />
+          <Recenter value={mapCenter} zoom={mapZoom} />
         </MapContainer>
       </div>
       <div className="flex flex-wrap items-center gap-3 text-sm">
@@ -212,17 +281,26 @@ export function LocationPicker({
           type="button"
           className="rounded-full border border-border px-3 py-1.5 font-medium hover:bg-secondary"
           onClick={() => {
+            setLocating(true);
+            setLocateDenied(false);
+            if (!navigator.geolocation) {
+              setLocating(false);
+              setLocateDenied(true);
+              return;
+            }
             navigator.geolocation.getCurrentPosition(
-              (pos) => applyCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-              () => undefined,
+              (pos) => void applyCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+              () => {
+                setLocating(false);
+                setLocateDenied(true);
+              },
+              { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 },
             );
           }}
         >
           Use my location
         </button>
-        <span className="text-muted">
-          {value.lat.toFixed(4)}, {value.lng.toFixed(4)}. Type a place or click the map.
-        </span>
+        <span className="text-muted">{hint}</span>
       </div>
     </div>
   );
