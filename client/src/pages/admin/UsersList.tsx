@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { EmptyState, PageLoading } from "../../components/PageChrome";
 import { ToneBadge } from "../../components/StatusBadge";
@@ -20,14 +20,12 @@ export function UsersListPage() {
   const [users, setUsers] = useState<User[] | null>(null);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "verified" | "unverified" | "flagged">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "verified" | "unverified">("all");
 
   useEffect(() => {
     setError("");
     setUsers(null);
     setQuery("");
-    setTypeFilter("all");
     setStatusFilter("all");
     const role = kitchens ? "DONOR" : "RECIPIENT";
     api<{ users: User[] }>(`/api/admin/users?role=${role}`)
@@ -35,24 +33,16 @@ export function UsersListPage() {
       .catch((e) => setError(e.message));
   }, [kitchens]);
 
-  const types = useMemo(() => {
-    const values = new Set((users ?? []).map((u) => (kitchens ? u.donorType : u.recipientType)).filter(Boolean) as string[]);
-    return ["all", ...values];
-  }, [users, kitchens]);
-
   const filtered = (users ?? []).filter((u) => {
     const hay = `${u.organizationName ?? ""} ${u.name} ${u.email}`.toLowerCase();
     if (query && !hay.includes(query.toLowerCase())) return false;
-    const type = kitchens ? u.donorType : u.recipientType;
-    if (typeFilter !== "all" && type !== typeFilter) return false;
     if (statusFilter === "verified" && !u.isVerified) return false;
     if (statusFilter === "unverified" && u.isVerified) return false;
-    if (statusFilter === "flagged" && !u.isFlagged) return false;
     return true;
   });
 
   if (error) return <p className="text-alert">{error}</p>;
-  if (!users) return <PageLoading label={kitchens ? "Loading kitchens…" : "Loading collectors…"} />;
+  if (!users) return <PageLoading />;
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-6">
@@ -78,11 +68,6 @@ export function UsersListPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        {types.map((type) => (
-          <AdminFilterButton key={type} active={typeFilter === type} onClick={() => setTypeFilter(type)}>
-            {type === "all" ? "All types" : type}
-          </AdminFilterButton>
-        ))}
         {(["all", "verified", "unverified"] as const).map((status) => (
           <AdminFilterButton key={status} active={statusFilter === status} onClick={() => setStatusFilter(status)}>
             {status === "all" ? "All" : status === "verified" ? "Verified" : "Unverified"}
