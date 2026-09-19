@@ -92,6 +92,10 @@ body {
   border-radius: 0.75rem;
 }
 
+.leaflet-control-attribution {
+  display: none !important;
+}
+
 .dark .leaflet-container {
   background: #1c1c1c;
 }
