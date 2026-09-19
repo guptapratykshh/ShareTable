@@ -82,7 +82,7 @@ export function ListingDetailPage() {
   }
 
   if (error && !detail) return <p className="text-alert">{error}</p>;
-  if (!detail) return <PageLoading label="Loading listing…" />;
+  if (!detail) return <PageLoading />;
   const d = detail.donation;
 
   return (
