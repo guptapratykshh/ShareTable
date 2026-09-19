@@ -23,7 +23,7 @@ const createSchema = z.object({
   category: z.enum(FOOD_CATEGORIES),
   preparedAt: z.string().optional(),
   bestBefore: z.string().optional(),
-  storageCondition: z.string().trim().max(200).optional(),
+  storageCondition: z.string().trim().min(3).max(200),
   address: z.string().trim().min(3).max(200),
   pickupInstructions: z.string().trim().max(500).optional(),
   allergens: z.array(z.string().trim().min(1).max(40)).max(15).optional(),
