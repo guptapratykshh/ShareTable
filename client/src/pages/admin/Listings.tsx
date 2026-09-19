@@ -40,7 +40,7 @@ export function ListingsPage() {
   }, [donations, query, status]);
 
   if (error) return <p className="text-alert">{error}</p>;
-  if (!donations) return <PageLoading label="Loading listings…" />;
+  if (!donations) return <PageLoading />;
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-6">
