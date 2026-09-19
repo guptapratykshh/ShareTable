@@ -65,7 +65,7 @@ export function DonorDashboard() {
   }, []);
 
   if (error) return <p className="text-alert">{error}</p>;
-  if (!stats) return <PageLoading label="Loading dashboard…" />;
+  if (!stats) return <PageLoading />;
 
   const org = user?.organizationName || user?.name || "there";
   const shortOrg = org.split(" ")[0];
@@ -75,11 +75,14 @@ export function DonorDashboard() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Donor workspace"
-        title="Your food impact, at a glance."
+        title={
+          <>
+            Your <em className="text-accent not-italic">food</em> impact, at a glance.
+          </>
+        }
         subtitle="Track what you share, what gets claimed, and where your rescue rate is improving."
         actions={<ButtonLink to="/donor/donate">Donate surplus →</ButtonLink>}
       />
-
       <section className="grid items-center gap-8 rounded-[18px] border border-accent/35 bg-[color-mix(in_srgb,var(--accent)_8%,var(--card))] px-6 py-5 lg:grid-cols-[1fr_minmax(270px,0.65fr)]">
         <div className="flex items-center gap-3">
           <span className="grid size-9 place-items-center rounded-[11px] bg-accent font-black text-accent-foreground">↗</span>
@@ -113,7 +116,9 @@ export function DonorDashboard() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">Activity</p>
-              <h2 className="display mt-1 text-[25px]">Meals shared</h2>
+              <h2 className="display mt-1 text-[25px]">
+                Meals <em className="text-accent not-italic">shared</em>
+              </h2>
             </div>
           </div>
           <div className="mt-6 h-[190px]">
@@ -123,7 +128,7 @@ export function DonorDashboard() {
                 <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted)" }} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "var(--muted)" }} />
                 <Tooltip />
-                <Bar dataKey="donated" fill="var(--secondary)" name="Donated" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="donated" fill="color-mix(in srgb, var(--accent) 40%, var(--secondary))" name="Donated" radius={[6, 6, 0, 0]} />
                 <Bar dataKey="rescued" fill="var(--accent)" name="Rescued" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -134,7 +139,9 @@ export function DonorDashboard() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">Outcome</p>
-              <h2 className="display mt-1 text-[25px]">Rescue rate</h2>
+              <h2 className="display mt-1 text-[25px]">
+                Rescue <em className="text-accent not-italic">rate</em>
+              </h2>
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-8 py-8">
