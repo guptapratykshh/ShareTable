@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ButtonLink, EmptyState, IconTile, PageHeader, SectionToolbar } from "../../components/PageChrome";
+import { ArrowRight, Check } from "lucide-react";
+import { ButtonLink, CardList, EmptyState, PageHeader, SectionToolbar } from "../../components/PageChrome";
 import { homeFor, useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
 import { formatDateTime } from "../../utils/format";
@@ -20,14 +21,7 @@ const EMPTY_COPY = {
   },
 } as const;
 
-function notificationIcon(type: string, title: string) {
-  const key = `${type} ${title}`.toLowerCase();
-  if (key.includes("pickup") || key.includes("picked") || key.includes("completed")) return "✓";
-  if (key.includes("claim")) return "↗";
-  return "•";
-}
-
-function isSuccessTone(type: string, title: string) {
+function isPickupTone(type: string, title: string) {
   const key = `${type} ${title}`.toLowerCase();
   return key.includes("pickup") || key.includes("picked") || key.includes("completed");
 }
@@ -60,29 +54,37 @@ export function NotificationsPage() {
           ) : null}
         </SectionToolbar>
       )}
-      <div className="grid gap-2.5">
-        {items.map((n) => {
-          const success = isSuccessTone(n.type, n.title);
-          return (
-            <article key={n.id} className="relative flex gap-4 rounded-[18px] border border-border bg-card px-6 py-5">
-              <IconTile accent={success}>{notificationIcon(n.type, n.title)}</IconTile>
-              <div className="min-w-0 flex-1 pr-4">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h2 className="display text-[19px] font-semibold">{n.title}</h2>
-                  <time className="text-[11px] text-muted">{formatDateTime(n.createdAt)}</time>
+      {items.length > 0 && (
+        <CardList>
+          {items.map((n) => {
+            const pickup = isPickupTone(n.type, n.title);
+            return (
+              <article key={n.id} className="relative flex items-start gap-4 py-[18px]">
+                <div
+                  className={`grid size-[38px] shrink-0 place-items-center rounded-xl ${
+                    pickup ? "bg-mint text-foreground" : "bg-secondary text-foreground"
+                  }`}
+                >
+                  {pickup ? <Check size={18} /> : <ArrowRight size={18} />}
                 </div>
-                <p className="mt-2 whitespace-pre-wrap text-[13px] leading-6 text-muted">{n.message}</p>
-                <div className="mt-3.5 flex flex-wrap gap-4 text-[11px] font-extrabold text-accent">
-                  {n.donationId && <Link to={`/donation/${n.donationId}`}>View donation</Link>}
-                  {n.claimId && <Link to={`/claims/${n.claimId}`}>View claim</Link>}
-                  <Link to={dashboard}>Open dashboard</Link>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold tracking-tight">{n.title}</h3>
+                    <time className="text-[10px] whitespace-nowrap text-muted">{formatDateTime(n.createdAt)}</time>
+                  </div>
+                  <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-muted">{n.message}</p>
+                  <div className="mt-3.5 flex flex-wrap gap-5 text-[10px] font-extrabold text-accent">
+                    {n.donationId && <Link to={`/donation/${n.donationId}`}>View donation</Link>}
+                    {n.claimId && <Link to={`/claims/${n.claimId}`}>View claim</Link>}
+                    <Link to={dashboard}>Open dashboard</Link>
+                  </div>
                 </div>
-              </div>
-              {!n.isRead && <span className="absolute right-6 top-6 size-1.5 rounded-full bg-accent" aria-label="Unread notification" />}
-            </article>
-          );
-        })}
-      </div>
+                {!n.isRead && <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-accent" aria-label="Unread notification" />}
+              </article>
+            );
+          })}
+        </CardList>
+      )}
       {items.length === 0 && (
         <EmptyState
           title="You're all caught up"
