@@ -8,10 +8,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { Link } from "react-router-dom";
 import { ButtonLink, PageHeader, PageLoading } from "../../components/PageChrome";
 import { MetricStrip } from "../../components/StatCard";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../services/api";
+import type { DonorPatterns } from "../../types";
 
 type DonorStats = {
   mealsDonated: number;
@@ -33,30 +35,15 @@ type DonorStats = {
   impact: { estimatedKgPrevented: number; estimatedValueInr: number; assumptions: { note: string } };
 };
 
-type PatternInsight = {
-  title: string;
-  body: string;
-  explanation?: string;
-  facts: Record<string, string | number>;
-};
-
-type Patterns = {
-  ready: boolean;
-  observed: number;
-  minDonations: number;
-  demoDataLabel?: string;
-  insights: PatternInsight[];
-  byDay: { day: string; meals: number; count: number; average: number }[];
-};
 
 export function DonorDashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState<DonorStats | null>(null);
-  const [patterns, setPatterns] = useState<Patterns | null>(null);
+  const [patterns, setPatterns] = useState<DonorPatterns | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([api<DonorStats>("/api/dashboard/donor"), api<Patterns>("/api/donor/patterns")])
+    Promise.all([api<DonorStats>("/api/dashboard/donor"), api<DonorPatterns>("/api/donor/patterns")])
       .then(([dash, pats]) => {
         setStats(dash);
         setPatterns(pats);
@@ -179,9 +166,7 @@ export function DonorDashboard() {
 
       <section className="flex items-center justify-between gap-8 rounded-[20px] bg-mint px-7 py-6 text-[#171a17]">
         <div>
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#665849]">
-            One useful signal{patterns?.demoDataLabel ? ` · ${patterns.demoDataLabel}` : ""}
-          </p>
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#665849]">One useful signal</p>
           {!patterns?.ready ? (
             <>
               <h2 className="display mt-1 max-w-[580px] text-[28px] text-[#171a17]">Patterns need more history.</h2>
@@ -190,11 +175,13 @@ export function DonorDashboard() {
                 Observations come from your recorded donation history, not predictions of future demand.
               </p>
             </>
-          ) : patterns.insights[0] ? (
+          ) : patterns.analysis || patterns.insights[0] ? (
             <>
-              <h2 className="display mt-1 max-w-[580px] text-[28px] text-[#171a17]">{patterns.insights[0].title}</h2>
+              <h2 className="display mt-1 max-w-[580px] text-[28px] text-[#171a17]">
+                {patterns.analysis?.title || patterns.insights[0].title}
+              </h2>
               <p className="mt-2.5 max-w-[620px] text-[13px] leading-6 text-[#665849]">
-                {patterns.insights[0].explanation || patterns.insights[0].body}
+                {patterns.analysis?.summary || patterns.insights[0].explanation || patterns.insights[0].body}
               </p>
             </>
           ) : (
@@ -206,7 +193,15 @@ export function DonorDashboard() {
             </>
           )}
         </div>
-        <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#171a17] text-xl text-mint">↗</span>
+        {patterns?.ready ? (
+          <Link
+            to="/donor/insights"
+            aria-label="Open detailed surplus analysis"
+            className="grid size-12 shrink-0 place-items-center rounded-full bg-[#171a17] text-xl text-mint"
+          >
+            ↗
+          </Link>
+        ) : null}
       </section>
 
       <p className="text-xs text-muted">
