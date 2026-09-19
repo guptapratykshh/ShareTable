@@ -146,6 +146,7 @@ export function RegisterPage() {
         )}
         <LocationPicker
           label="Address"
+          autoLocate
           value={location}
           address={form.address}
           onChange={({ lat, lng, address }) => {
