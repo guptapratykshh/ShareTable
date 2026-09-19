@@ -69,13 +69,17 @@ export function ListingFormPage() {
     }
   }
 
-  if (!kitchens && !error) return <PageLoading label="Loading kitchens…" />;
+  if (!kitchens && !error) return <PageLoading />;
 
   return (
     <div className="space-y-8">
       <AdminHeader
         eyebrow="Listings"
-        title="New listing"
+        title={
+          <>
+            New <em className="text-accent not-italic">listing</em>
+          </>
+        }
         subtitle="Post a surplus meal with enough detail for a safe, quick pickup."
       />
       <AdminFormCard
