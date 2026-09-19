@@ -1,9 +1,10 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Button, Field, inputClass } from "../components/Form";
 import { PageHeader, PageLoading } from "../components/PageChrome";
 import { StatusBadge } from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
+import { useNotifications } from "../context/NotificationContext";
 import { api, ApiError } from "../services/api";
 import type { Claim } from "../types";
 import { formatTime, mapsUrl } from "../utils/format";
@@ -15,8 +16,12 @@ export function ClaimDetailsPage() {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [confirming, setConfirming] = useState(false);
+  const { items: notifications } = useNotifications();
+  const seenNoteRef = useRef<string | null>(null);
 
   async function load() {
+    if (!id) return;
     const data = await api<{ claim: Claim }>(`/api/claims/${id}`);
     setClaim(data.claim);
   }
@@ -25,9 +30,33 @@ export function ClaimDetailsPage() {
     load().catch((e) => setError(e.message));
   }, [id]);
 
+  useEffect(() => {
+    if (!id) return;
+    const timer = window.setInterval(() => {
+      load().catch(() => undefined);
+    }, 8000);
+    return () => window.clearInterval(timer);
+  }, [id]);
+
+  useEffect(() => {
+    const newest = notifications[0];
+    if (!newest) return;
+    if (seenNoteRef.current == null) {
+      seenNoteRef.current = newest.id;
+      return;
+    }
+    if (newest.id === seenNoteRef.current) return;
+    seenNoteRef.current = newest.id;
+    if (newest.claimId === id || newest.donationId === claim?.donationId) {
+      load().catch(() => undefined);
+    }
+  }, [notifications, id, claim?.donationId]);
+
   async function complete(e: FormEvent) {
     e.preventDefault();
+    if (confirming) return;
     setError("");
+    setConfirming(true);
     try {
       const data = await api<{ claim: Claim }>(`/api/claims/${id}`, {
         method: "PATCH",
@@ -37,6 +66,8 @@ export function ClaimDetailsPage() {
       setNotice("Pickup recorded. These meals now count as rescued.");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not complete pickup.");
+    } finally {
+      setConfirming(false);
     }
   }
 
@@ -82,9 +113,18 @@ export function ClaimDetailsPage() {
       {canConfirm && claim.status !== "PICKED_UP" && (
         <form onSubmit={complete} className="rounded-[1.5rem] border border-border bg-card p-5">
           <Field label="Pickup code">
-            <input className={inputClass} value={code} placeholder="ST-0000" onChange={(e) => setCode(e.target.value)} autoComplete="off" />
+            <input className={inputClass} value={code} placeholder="ST-0000" onChange={(e) => setCode(e.target.value)} autoComplete="off" disabled={confirming} />
           </Field>
-          <Button className="mt-3">Mark as picked up</Button>
+          <Button className="mt-3" disabled={confirming}>
+            {confirming ? (
+              <>
+                <span aria-hidden className="size-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
+                Recording pickup…
+              </>
+            ) : (
+              "Mark as picked up"
+            )}
+          </Button>
         </form>
       )}
       {donation && (
