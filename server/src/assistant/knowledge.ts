@@ -140,6 +140,8 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
       "peanut",
       "vegetarian",
       "non-vegetarian",
+      "non veg",
+      "non-veg",
       "dietary",
       "category",
       "ingredients",
@@ -161,9 +163,9 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
   },
   {
     id: "assistant-actions",
-    keywords: ["running late", "update instructions", "tell the donor", "tell the recipient", "i've arrived"],
+    keywords: ["running late", "update instructions", "i've arrived", "what can you notify", "what can the assistant"],
     answer:
-      "I can notify the other party that you are late, that pickup instructions changed, or that you have arrived. Nothing is sent until you confirm.",
+      "I can notify the other party that you are late, that pickup instructions changed, that you have arrived, or a short pickup message. Nothing is sent until you confirm.",
   },
   {
     id: "reliability",
