@@ -60,7 +60,32 @@ export const config = {
   },
   get bedrockModelId() {
     if (this.nodeEnv === "test") return "";
-    return process.env.BEDROCK_MODEL_ID ?? "";
+    return envStr("BEDROCK_MODEL_ID");
+  },
+  get groqApiKey() {
+    if (this.nodeEnv === "test") return "";
+    return envStr("GROQ_API_KEY");
+  },
+  get groqModel() {
+    return envStr("GROQ_MODEL") || "openai/gpt-oss-20b";
+  },
+  get llmProvider() {
+    if (this.nodeEnv === "test") return "none";
+    const raw = envStr("LLM_PROVIDER").toLowerCase();
+    if (raw === "bedrock" || raw === "groq" || raw === "none") return raw;
+    if (this.groqApiKey) return "groq";
+    return "none";
+  },
+  get llmEnabled() {
+    if (this.nodeEnv === "test") return false;
+    if (this.llmProvider === "groq") return Boolean(this.groqApiKey);
+    if (this.llmProvider === "bedrock") return Boolean(this.bedrockModelId);
+    return false;
+  },
+  get llmModel() {
+    if (this.llmProvider === "groq") return this.groqModel;
+    if (this.llmProvider === "bedrock") return this.bedrockModelId;
+    return "";
   },
   get internalTickSecret() {
     return envStr("INTERNAL_TICK_SECRET");
