@@ -45,6 +45,7 @@ export function AuthShell({
   switchLabel,
   switchTo,
   switchCta,
+  alignStart = false,
   children,
 }: {
   eyebrow?: string;
@@ -56,6 +57,7 @@ export function AuthShell({
   switchLabel: string;
   switchTo: string;
   switchCta: string;
+  alignStart?: boolean;
   children: ReactNode;
 }) {
   const [rescued, setRescued] = useState<number | null>(null);
@@ -80,8 +82,8 @@ export function AuthShell({
           </div>
         </header>
 
-        <section className="grid min-h-[calc(100vh-100px)] items-center gap-10 py-10 lg:grid-cols-[minmax(280px,0.75fr)_minmax(380px,500px)] lg:gap-[clamp(4rem,12vw,11rem)] lg:py-16">
-          <aside className="max-w-[430px]">
+        <section className={`grid min-h-[calc(100vh-100px)] gap-10 py-10 lg:grid-cols-[minmax(280px,0.75fr)_minmax(380px,500px)] lg:gap-[clamp(4rem,12vw,11rem)] lg:py-16 ${alignStart ? "items-start" : "items-center"}`}>
+          <aside className={`max-w-[430px]${alignStart ? " lg:sticky lg:top-10" : ""}`}>
             <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">
               <span className="mr-2 inline-block size-2 rounded-full bg-accent align-middle" />
               {eyebrow}
