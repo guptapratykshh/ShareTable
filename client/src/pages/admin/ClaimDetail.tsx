@@ -71,7 +71,7 @@ export function ClaimDetailPage() {
   }
 
   if (error && !claim) return <p className="text-alert">{error}</p>;
-  if (!claim) return <PageLoading label="Loading claim…" />;
+  if (!claim) return <PageLoading />;
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
