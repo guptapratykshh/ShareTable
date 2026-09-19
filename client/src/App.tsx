@@ -11,6 +11,7 @@ import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { DonorDashboard } from "./pages/donor/Dashboard";
 import { DonatePage } from "./pages/donor/Donate";
 import { DonorDonationsPage } from "./pages/donor/Donations";
+import { DonorInsightsPage } from "./pages/donor/Insights";
 import { RecipientDashboard } from "./pages/recipient/Dashboard";
 import { RecipientClaimsPage } from "./pages/recipient/Claims";
 import { NotificationsPage } from "./pages/recipient/Notifications";
@@ -79,6 +80,14 @@ export default function App() {
               element={
                 <ProtectedRoute roles={["DONOR"]}>
                   <DonorDonationsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/donor/insights"
+              element={
+                <ProtectedRoute roles={["DONOR"]}>
+                  <DonorInsightsPage />
                 </ProtectedRoute>
               }
             />
