@@ -2,7 +2,6 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Field, inputClass } from "../../components/Form";
 import { LocationPicker } from "../../components/LocationPicker";
-import { useAuth } from "../../context/AuthContext";
 import { api, ApiError } from "../../services/api";
 import { COMMON_ALLERGENS, FOOD_CATEGORIES } from "../../types";
 
@@ -40,25 +39,24 @@ function Section({
 }
 
 export function DonatePage() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>(0);
-  const [location, setLocation] = useState(user?.location ?? { lat: 12.9352, lng: 77.6245 });
+  const [location, setLocation] = useState({ lat: 12.9716, lng: 77.5946 });
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [aiHint, setAiHint] = useState("");
   const [allergens, setAllergens] = useState<string[]>([]);
   const [customAllergen, setCustomAllergen] = useState("");
   const [form, setForm] = useState({
-    foodName: "Rice + Dal + Vegetables",
-    description: "Freshly prepared vegetarian meal from the evening mess service.",
-    quantity: "40",
-    category: "Vegetarian",
+    foodName: "",
+    description: "",
+    quantity: "",
+    category: "",
     preparedAt: "",
     bestBefore: "",
-    storageCondition: "Kept covered in insulated containers",
-    address: user?.address ?? "College Cafeteria",
-    pickupInstructions: "Enter from the west gate. Ask for the mess supervisor.",
+    storageCondition: "",
+    address: "",
+    pickupInstructions: "",
     safetyConfirmed: false,
   });
 
@@ -91,13 +89,38 @@ export function DonatePage() {
       setError("Enter the number of surplus meals. ShareTable does not predict this number.");
       return false;
     }
+    if (!form.category) {
+      setError("Choose a food category.");
+      return false;
+    }
+    return true;
+  }
+
+  function safetyReady() {
+    if (!form.storageCondition.trim() || !form.preparedAt || !form.bestBefore) {
+      setError("Fill in storage, prepared time, and best before.");
+      return false;
+    }
+    return true;
+  }
+
+  function pickupReady() {
+    if (!form.address.trim()) {
+      setError("Set a pickup address on the map or by typing a place.");
+      return false;
+    }
+    if (!form.safetyConfirmed) {
+      setError("Please confirm that the food is suitable for donation and has been handled safely.");
+      return false;
+    }
     return true;
   }
 
   function goToStep(next: Step) {
     if (next === step) return;
     setError("");
-    if (next > 0 && step === 0 && !essentialsReady()) return;
+    if (next > 0 && !essentialsReady()) return;
+    if (next > 1 && !safetyReady()) return;
     setStep(next);
   }
 
@@ -140,10 +163,7 @@ export function DonatePage() {
       setStep(0);
       return;
     }
-    if (!form.safetyConfirmed) {
-      setError("Please confirm that the food is suitable for donation and has been handled safely.");
-      return;
-    }
+    if (!pickupReady()) return;
     setPending(true);
     try {
       const data = await api<{ donation: { id: string }; notifiedRecipientCount: number }>(
@@ -214,12 +234,12 @@ export function DonatePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <Field label="Food name">
-                  <input className={inputClass} value={form.foodName} onChange={(e) => set("foodName", e.target.value)} required />
+                  <input className={inputClass} value={form.foodName} onChange={(e) => set("foodName", e.target.value)} placeholder="e.g. Rice, dal, and vegetables" required />
                 </Field>
               </div>
               <div className="sm:col-span-2">
                 <Field label="Short description">
-                  <textarea className={inputClass} rows={3} value={form.description} onChange={(e) => set("description", e.target.value)} required />
+                  <textarea className={inputClass} rows={3} value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="What it is, how it was kept, and who it is for" required />
                 </Field>
                 <button type="button" onClick={enhance} className="mt-2 text-xs font-extrabold text-accent">
                   Improve description with AI (optional)
@@ -227,12 +247,17 @@ export function DonatePage() {
                 {aiHint && <p className="mt-1 text-[11px] text-muted">{aiHint}</p>}
               </div>
               <Field label="Number of meals">
-                <input className={inputClass} type="number" min={1} step={1} value={form.quantity} onChange={(e) => set("quantity", e.target.value)} required />
+                <input className={inputClass} type="number" min={1} step={1} value={form.quantity} onChange={(e) => set("quantity", e.target.value)} placeholder="e.g. 40" required />
               </Field>
               <Field label="Category">
-                <select className={inputClass} value={form.category} onChange={(e) => set("category", e.target.value)}>
+                <select className={inputClass} value={form.category} onChange={(e) => set("category", e.target.value)} required>
+                  <option value="" disabled>
+                    Select a category
+                  </option>
                   {FOOD_CATEGORIES.map((c) => (
-                    <option key={c}>{c}</option>
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
                   ))}
                 </select>
               </Field>
@@ -298,14 +323,14 @@ export function DonatePage() {
                 )}
               </fieldset>
               <Field label="Storage condition">
-                <input className={inputClass} value={form.storageCondition} onChange={(e) => set("storageCondition", e.target.value)} />
+                <input className={inputClass} value={form.storageCondition} onChange={(e) => set("storageCondition", e.target.value)} placeholder="e.g. Covered, in insulated containers" required />
               </Field>
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Prepared at">
-                  <input className={inputClass} type="datetime-local" value={form.preparedAt} onChange={(e) => set("preparedAt", e.target.value)} />
+                  <input className={inputClass} type="datetime-local" value={form.preparedAt} onChange={(e) => set("preparedAt", e.target.value)} required />
                 </Field>
                 <Field label="Best before">
-                  <input className={inputClass} type="datetime-local" value={form.bestBefore} onChange={(e) => set("bestBefore", e.target.value)} />
+                  <input className={inputClass} type="datetime-local" value={form.bestBefore} onChange={(e) => set("bestBefore", e.target.value)} required />
                 </Field>
               </div>
             </div>
@@ -317,6 +342,7 @@ export function DonatePage() {
             <div className="grid gap-5">
               <LocationPicker
                 label="Pickup location"
+                autoLocate
                 value={location}
                 address={form.address}
                 onChange={({ lat, lng, address }) => {
@@ -325,7 +351,7 @@ export function DonatePage() {
                 }}
               />
               <Field label="Pickup instructions">
-                <textarea className={inputClass} rows={3} value={form.pickupInstructions} onChange={(e) => set("pickupInstructions", e.target.value)} />
+                <textarea className={inputClass} rows={3} value={form.pickupInstructions} onChange={(e) => set("pickupInstructions", e.target.value)} placeholder="e.g. West gate, ask for the mess supervisor" />
               </Field>
             </div>
           </Section>
@@ -344,6 +370,7 @@ export function DonatePage() {
                   checked={form.safetyConfirmed}
                   onChange={(e) => set("safetyConfirmed", e.target.checked)}
                   className="mt-0.5"
+                  required
                 />
                 I confirm this food is suitable for donation and has been handled safely.
               </label>
