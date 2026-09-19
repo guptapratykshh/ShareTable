@@ -219,7 +219,7 @@ export function LocationPicker({
 
   return (
     <div className="space-y-2" ref={rootRef}>
-      <div className="relative z-50 space-y-1.5">
+      <div className="relative z-10 space-y-1.5">
         <label className="block space-y-1.5">
           <span className="text-sm font-medium text-foreground">{label}</span>
           <input
@@ -243,7 +243,7 @@ export function LocationPicker({
           <ul
             id={listId}
             role="listbox"
-            className="absolute z-[2000] mt-1 max-h-56 w-full overflow-auto rounded-xl border border-border bg-card py-1 shadow-lg"
+            className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-border bg-card py-1 shadow-lg"
           >
             {loading && <li className="px-3.5 py-2 text-sm text-muted">Searching places...</li>}
             {!loading && searchError && <li className="px-3.5 py-2 text-sm text-muted">{searchError}</li>}
