@@ -78,16 +78,19 @@ export function EmptyState({
   );
 }
 
-export function PageLoading({ label = "Loading…" }: { label?: string }) {
+export function CardList({ children }: { children: ReactNode }) {
   return (
-    <div className="space-y-4">
-      <div className="h-10 w-56 animate-pulse rounded-xl bg-secondary" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="h-24 animate-pulse rounded-[1.25rem] border border-border bg-card" />
-        ))}
-      </div>
-      <p className="text-sm text-muted">{label}</p>
+    <div className="max-h-[min(32rem,calc(100svh-16rem))] divide-y divide-border overflow-y-auto overscroll-contain rounded-[18px] border border-border bg-card px-4">
+      {children}
+    </div>
+  );
+}
+
+export function PageLoading() {
+  return (
+    <div className="flex min-h-[50vh] w-full items-center justify-center" role="status">
+      <span className="sr-only">Loading</span>
+      <span aria-hidden className="size-11 animate-spin rounded-full border-[3px] border-secondary border-t-accent" />
     </div>
   );
 }
