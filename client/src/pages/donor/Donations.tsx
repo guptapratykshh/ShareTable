@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DonationCard } from "../../components/DonationCard";
 import { ConfirmModal } from "../../components/ConfirmModal";
-import { ButtonLink, EmptyState, FilterPills, PageHeader, PageLoading, SectionToolbar } from "../../components/PageChrome";
+import { ButtonLink, CardList, EmptyState, FilterPills, PageHeader, PageLoading, SectionToolbar } from "../../components/PageChrome";
 import { MetricStrip } from "../../components/StatCard";
 import { api, ApiError } from "../../services/api";
 import type { Donation } from "../../types";
@@ -68,13 +68,17 @@ export function DonorDonationsPage() {
     }
   }
 
-  if (loading) return <PageLoading label="Loading donations…" />;
+  if (loading) return <PageLoading />;
 
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow="Your activity"
-        title="Donation history"
+        title={
+          <>
+            Donation <em className="text-accent not-italic">history</em>
+          </>
+        }
         subtitle="Track active listings, completed pickups, and food that still needs a second chance."
         actions={
           <ButtonLink to="/donor/donate">
@@ -111,7 +115,7 @@ export function DonorDonationsPage() {
               ]}
             />
           </SectionToolbar>
-          <div className="grid gap-3 md:grid-cols-2">
+          <CardList>
             {visible.map((d) => (
               <DonationCard
                 key={d.id}
@@ -120,7 +124,7 @@ export function DonorDonationsPage() {
                 onRemove={isExpired(d.status) ? () => setPendingId(d.id) : undefined}
               />
             ))}
-          </div>
+          </CardList>
           {visible.length === 0 && <EmptyState title="No listings in this filter" body="Try another status, or post a new surplus listing." />}
         </>
       )}
