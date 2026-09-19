@@ -51,13 +51,17 @@ export function ClaimFormPage() {
     }
   }
 
-  if ((!donations || !collectors) && !error) return <PageLoading label="Loading claim form…" />;
+  if ((!donations || !collectors) && !error) return <PageLoading />;
 
   return (
     <div className="space-y-8">
       <AdminHeader
         eyebrow="Claims"
-        title="New claim"
+        title={
+          <>
+            New <em className="text-accent not-italic">claim</em>
+          </>
+        }
         subtitle="Reserve meals for a collector and keep the handoff accountable."
       />
       <AdminFormCard title="Claim details" description="The collector must be within the listing rescue radius.">
