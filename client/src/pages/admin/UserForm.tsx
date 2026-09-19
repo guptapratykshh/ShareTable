@@ -56,7 +56,17 @@ export function UserFormPage() {
     <div className="space-y-8">
       <AdminHeader
         eyebrow={kitchens ? "Kitchens" : "Collectors"}
-        title={kitchens ? "New kitchen" : "New collector"}
+        title={
+          kitchens ? (
+            <>
+              New <em className="text-accent not-italic">kitchen</em>
+            </>
+          ) : (
+            <>
+              New <em className="text-accent not-italic">collector</em>
+            </>
+          )
+        }
         subtitle={
           kitchens
             ? "Add a trusted surplus partner to ShareTable."
