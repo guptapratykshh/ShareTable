@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { MapContainer, Marker } from "react-leaflet";
 import L from "leaflet";
@@ -9,6 +9,7 @@ import { PageHeader, PageLoading } from "../components/PageChrome";
 import { ThemedTileLayer } from "../components/ThemedTileLayer";
 import { ConfirmModal } from "../components/ConfirmModal";
 import { useAuth } from "../context/AuthContext";
+import { useNotifications } from "../context/NotificationContext";
 import { api, ApiError } from "../services/api";
 import type { Claim, Donation } from "../types";
 import { formatRemaining, formatTime, mapsUrl, allergenLine } from "../utils/format";
@@ -38,12 +39,18 @@ export function DonationDetailsPage() {
   const [demoMode, setDemoMode] = useState(false);
   const [confirm, setConfirm] = useState<"cancel" | "remove" | null>(null);
   const [busy, setBusy] = useState(false);
+  const [claiming, setClaiming] = useState(false);
+  const { items: notifications } = useNotifications();
+  const seenNoteRef = useRef<string | null>(null);
+  const myClaimIdRef = useRef<string | undefined>(undefined);
 
   async function load() {
+    if (!id) return;
     const data = await api<{ donation: Donation; claims?: Claim[]; myClaim?: Claim }>(`/api/donations/${id}`);
     setDonation(data.donation);
     setClaims(data.claims ?? []);
     setMyClaim(data.myClaim);
+    myClaimIdRef.current = data.myClaim?.id;
     const status = await api<{ demoMode?: boolean }>(`/api/donations/${id}/rescue-status`);
     setDemoMode(Boolean(status.demoMode));
   }
@@ -52,11 +59,35 @@ export function DonationDetailsPage() {
     load().catch((e) => setError(e.message));
   }, [id]);
 
+  useEffect(() => {
+    if (!id) return;
+    const timer = window.setInterval(() => {
+      load().catch(() => undefined);
+    }, 8000);
+    return () => window.clearInterval(timer);
+  }, [id]);
+
+  useEffect(() => {
+    const newest = notifications[0];
+    if (!newest) return;
+    if (seenNoteRef.current == null) {
+      seenNoteRef.current = newest.id;
+      return;
+    }
+    if (newest.id === seenNoteRef.current) return;
+    seenNoteRef.current = newest.id;
+    if (newest.donationId === id || newest.claimId === myClaimIdRef.current) {
+      load().catch(() => undefined);
+    }
+  }, [notifications, id]);
+
   useCountdown(donation?.expiresAt);
 
   async function claim(e: FormEvent) {
     e.preventDefault();
+    if (claiming) return;
     setError("");
+    setClaiming(true);
     try {
       const data = await api<{ donation: Donation; claim: Claim }>(`/api/donations/${id}/claim`, {
         method: "POST",
@@ -64,11 +95,14 @@ export function DonationDetailsPage() {
       });
       setDonation(data.donation);
       setMyClaim(data.claim);
+      myClaimIdRef.current = data.claim.id;
       setNotice(`${data.claim.quantity} meals reserved. ${data.donation.availableQuantity} still available.`);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Could not claim meals.";
       setError(message);
       load().catch(() => undefined);
+    } finally {
+      setClaiming(false);
     }
   }
 
@@ -164,9 +198,18 @@ export function DonationDetailsPage() {
         {canClaim && (
           <form onSubmit={claim} className="rounded-[1.5rem] border border-border bg-card p-5">
             <Field label="Meals to claim">
-              <input className={inputClass} type="number" min={1} max={donation.availableQuantity} value={qty} onChange={(e) => setQty(e.target.value)} />
+              <input className={inputClass} type="number" min={1} max={donation.availableQuantity} value={qty} onChange={(e) => setQty(e.target.value)} disabled={claiming} />
             </Field>
-            <Button className="mt-3">Claim food</Button>
+            <Button className="mt-3" disabled={claiming}>
+              {claiming ? (
+                <>
+                  <span aria-hidden className="size-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
+                  Reserving…
+                </>
+              ) : (
+                "Claim food"
+              )}
+            </Button>
           </form>
         )}
 
@@ -174,7 +217,10 @@ export function DonationDetailsPage() {
           <div className="rounded-[1.5rem] border border-border bg-card p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-semibold">Your reservation</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold">Your reservation</p>
+                  <StatusBadge status={myClaim.status} />
+                </div>
                 <p className="mt-1 text-sm text-muted">{myClaim.quantity} meals</p>
               </div>
               {myClaim.claimCode ? (
