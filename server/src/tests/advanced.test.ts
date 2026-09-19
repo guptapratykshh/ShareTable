@@ -109,6 +109,11 @@ describe("rescue escalation", () => {
       { $set: { createdAt: new Date(Date.now() - 41 * 60_000) } },
     );
 
+    const donor = await login("pratykshgupta9999@gmail.com");
+    await request(app)
+      .get(`/api/donations/${donation!.id}/rescue-status`)
+      .set("Authorization", `Bearer ${donor}`);
+
     const outer = await login("outerreach@foodrescue.demo");
     const nearby = await request(app).get("/api/donations/nearby").set("Authorization", `Bearer ${outer}`);
     const match = nearby.body.donations.find((d: { foodName: string }) => d.foodName === "Rice + Dal + Vegetables");
@@ -161,6 +166,8 @@ describe("donor intelligence", () => {
         quantity: 40,
         category: "Vegetarian",
         address: "Cafeteria",
+        storageCondition: "Covered containers",
+        pickupInstructions: "Ask at the desk.",
         location: loc,
         safetyConfirmed: true,
       });
