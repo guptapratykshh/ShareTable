@@ -123,7 +123,7 @@ export function UserDetailPage() {
   }
 
   if (error && !detail) return <p className="text-alert">{error}</p>;
-  if (!detail) return <PageLoading label="Loading account…" />;
+  if (!detail) return <PageLoading />;
   const user = detail.user;
   const kitchen = user.role === "DONOR";
 
@@ -157,7 +157,7 @@ export function UserDetailPage() {
       {user.location && (
         <div className="overflow-hidden rounded-[1.5rem] border border-border">
           <div className="h-56">
-            <MapContainer center={[user.location.lat, user.location.lng]} zoom={15} className="h-full w-full">
+            <MapContainer attributionControl={false} center={[user.location.lat, user.location.lng]} zoom={15} className="h-full w-full">
               <ThemedTileLayer />
               <Marker position={[user.location.lat, user.location.lng]} icon={icon} />
             </MapContainer>
