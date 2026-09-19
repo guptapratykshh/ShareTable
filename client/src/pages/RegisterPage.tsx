@@ -63,6 +63,7 @@ export function RegisterPage() {
 
   return (
     <AuthShell
+      alignStart
       asideTitle={
         <>
           Make every meal
