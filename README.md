@@ -10,6 +10,7 @@ This is a working product demo, not a chatbot-only experiment and not a food-was
 
 - App and API: [https://vmcwfgh43e.ap-south-1.awsapprunner.com](https://vmcwfgh43e.ap-south-1.awsapprunner.com)
 - Health check: [https://vmcwfgh43e.ap-south-1.awsapprunner.com/api/health](https://vmcwfgh43e.ap-south-1.awsapprunner.com/api/health)
+- YouTube Demo Link: https://youtu.be/eZ2PY4_q9ak?si=5SV-K-3kH48YQDsh 
 
 The live service runs on **AWS App Runner** in `ap-south-1` (Express API and Vite frontend in one container), with **MongoDB Atlas** for data and **S3** for meal photos. CloudFront is optional and may stay off until the AWS account finishes verification. Use the App Runner HTTPS URL for demos.
 
