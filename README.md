@@ -12,11 +12,97 @@ This is a working product demo, not a chatbot-only experiment and not a food-was
 
 - App and API: [https://vmcwfgh43e.ap-south-1.awsapprunner.com](https://vmcwfgh43e.ap-south-1.awsapprunner.com)
 - Health: [https://vmcwfgh43e.ap-south-1.awsapprunner.com/api/health](https://vmcwfgh43e.ap-south-1.awsapprunner.com/api/health) (reports `runtime`, `region`, and `llm`)
-- Youtube Demo Link: https://youtu.be/eZ2PY4_q9ak?si=aZeuqriXBXJeQNIk
-
-The live service runs on **AWS App Runner** in `ap-south-1` (Express API + Vite SPA in one container), with **MongoDB Atlas** for data, **ECR** for the container image, **S3** for photos and a static web copy, and **EventBridge** rule `sharetable-rescue-tick` (every 1 minute) calling `/api/internal/rescue-tick`. CloudFront is optional and may stay off until AWS account verification finishes. Use the App Runner HTTPS URL for demos.
+- YouTube demo: [https://youtu.be/eZ2PY4_q9ak](https://youtu.be/eZ2PY4_q9ak)
 
 Try the seeded accounts under [Demo credentials](#demo-credentials).
+
+## How we used AWS in ShareTable
+
+ShareTable is a food-rescue product first. AWS is how we shipped it for real, kept meal photos out of the app server, and made rescue radius expansion work even when nobody had the website open.
+
+We built for the **Ship It** track: a public HTTPS URL in `ap-south-1` that anyone can open. We also used AWS SDKs in the codebase (Build It style tooling) for S3 uploads and Amazon Bedrock Converse. The live app, the health check, and the demo video are all meant to show that AWS is in the running system, not only in a slide.
+
+### The problem we were solving
+
+College messes, restaurants, and households often have leftover food that is still usable. Nearby NGOs and community members would take it, but they rarely get a fast, trustworthy signal. ShareTable closes that gap:
+
+**Donate → match within about 2.5 km → notify → claim → pickup code → mark picked up → impact.**
+
+Only meals marked picked up count as rescued. If nobody claims in time, the search radius can widen from 2.5 km to 4 km to 6 km so more registered recipients get a chance before the listing expires.
+
+### App Runner: one live URL for the whole product
+
+The production app runs on **AWS App Runner** in Mumbai (`ap-south-1`). One Docker image serves both the Vite React frontend and the Express API. That gave us a single HTTPS address for demos, mentor checks, and the YouTube walkthrough:
+
+[https://vmcwfgh43e.ap-south-1.awsapprunner.com](https://vmcwfgh43e.ap-south-1.awsapprunner.com)
+
+We chose a small service size on purpose (0.25 vCPU / 0.5 GB) to stay close to free-tier thinking and to force honest tradeoffs. That memory limit is why we do not host a local LLM inside the container. The product still needs AI helpers for food descriptions and the assistant, so those calls go out over HTTPS instead.
+
+`GET /api/health` is part of the AWS story too. On the live service it reports `runtime: "ap-runner"`, `region: "ap-south-1"`, and the active LLM provider. Judges can open that JSON and see that the request is hitting App Runner, not a laptop.
+
+### ECR: how we deploy without babysitting servers
+
+We build the root `Dockerfile`, push the image to **Amazon ECR** as `sharetable:latest`, and let App Runner pull that tag. Day to day that means:
+
+1. Build the container locally or in CI.
+2. Push to ECR.
+3. Start or force a new App Runner deployment.
+
+We do not SSH into boxes or manage EC2 for the Ship It demo. The image is the unit of release.
+
+### S3: meal photos and a static web copy
+
+Food listings can carry photos. The API route `POST /api/uploads/photo-url` uses the AWS SDK for JavaScript v3 to create a **presigned S3 PUT URL**. The browser uploads straight to S3. The App Runner container never needs to stream the raw image through itself, and the client never holds long-lived AWS keys.
+
+In our account:
+
+- `share-table-food-rescue` stores meal photos under `photos/*`
+- `sharetable-web-982428800112` holds a static copy of the Vite build
+
+CloudFront would be the natural next hop for public assets, but account verification blocked CDN setup during the hackathon window. Until that opens, demos use the App Runner HTTPS URL directly. The instance role still has `s3:PutObject` for the photo prefix so uploads work from the running service.
+
+### EventBridge: rescue keeps moving when the UI is idle
+
+Unclaimed food should not wait for someone to refresh the nearby list. We created EventBridge rule **`sharetable-rescue-tick`**, scheduled every minute. That rule POSTs to `/api/internal/rescue-tick` with an `x-internal-secret` header.
+
+On each tick the API can expire stale listings and widen the match radius when the timing rules say so. That is the difference between a demo that only works while you click around and a product that keeps trying to rescue food in the background.
+
+Locally, escalation also runs on nearby, detail, claim, and rescue-status reads. In production, EventBridge is what makes the same logic reliable without a user session.
+
+### IAM: least privilege for pull, put, and model invoke
+
+App Runner uses two role ideas:
+
+- An **access role** so the service can pull the image from ECR
+- An **instance role** so the running container can put objects to S3 and, when enabled, call Bedrock
+
+Secrets like `DATABASE_URL`, `JWT_SECRET`, `GROQ_API_KEY`, and `INTERNAL_TICK_SECRET` stay in App Runner environment configuration. They are not committed to GitHub.
+
+### Bedrock (wired) and Groq (live today)
+
+We integrated **Amazon Bedrock** Nova Micro through `@aws-sdk/client-bedrock-runtime` and the Converse API. Donate description help, assistant classify/rephrase, and kitchen pattern copy can all flip with `LLM_PROVIDER=bedrock`.
+
+During First Commit, AWS account verification still gated Nova Micro in production. App Runner’s 0.5 GB limit also ruled out hosting Ollama in the container. So the live path uses Groq `openai/gpt-oss-20b` over HTTPS, while the Bedrock client, model id, and IAM permission stay ready for a clean switch later.
+
+That split is intentional. Product flows do not invent food-safety guarantees. The model may only rephrase grounded copy. The ShareTable Assistant still requires an explicit Confirm (or a clear `send it`) before any late, arrival, or pickup note is delivered.
+
+### What is not on AWS (and why we say so)
+
+Honesty mattered in the writeup:
+
+- Primary database: **MongoDB Atlas** (GeoJSON `2dsphere` matching), not RDS or DynamoDB
+- Auth: **JWT + bcrypt**, not Cognito
+- Email verification: SMTP (Gmail App Password supported)
+
+AWS still sits under the shipped experience: hosting, container registry, object storage, scheduled rescue ticks, IAM, and the Bedrock-ready AI path.
+
+### How this shows up in the three submission pieces
+
+1. **Public GitHub repo:** [https://github.com/the-ivii/ShareTable](https://github.com/the-ivii/ShareTable)
+2. **YouTube demo under 3 minutes:** [https://youtu.be/eZ2PY4_q9ak](https://youtu.be/eZ2PY4_q9ak) (shows the rescue flow and AWS in action)
+3. **This writeup:** how App Runner, ECR, S3, EventBridge, IAM, and Bedrock fit the food-rescue product we actually shipped
+
+More operator detail lives in [`infrastructure/README.md`](infrastructure/README.md).
 
 ## Problem
 
