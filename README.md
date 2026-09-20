@@ -281,19 +281,6 @@ Seeded recipients around the Polaris campus pin in Bengaluru:
 - Distant Aid ~3.8 km: level 2
 - Outer Reach Kitchen ~5.2 km: level 3
 
-## 3-minute demo
-
-With `DEMO_MODE=true` (or **Expand rescue radius (demo)** when `demoMode` is true):
-
-1. Donor posts meals → nearby recipients notified.
-2. Recipient sees urgency / countdown / **NORMAL RESCUE**.
-3. Escalate → wider radius, **RESCUE EXPANDED**.
-4. Claim → remaining quantity updates.
-5. Pickup with code → rescued count increases.
-6. Donor Insights: patterns from history (Demo Data when seeded).
-7. Assistant: reached + gate note → Confirm or type `send it`.
-8. Admin: listings, claims, heatmap.
-
 ## Tests
 
 ```bash
