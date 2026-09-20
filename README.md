@@ -270,7 +270,7 @@ Never commit `.env`.
 | Role | Email | Password |
 | --- | --- | --- |
 | Donor (Polaris College Mess) | `pratykshgupta9999@gmail.com` | `Demo@123` |
-| Recipient (Helping Hands NGO) | `divyanshitalreja12@gmail.com` | `Demo@123` |
+| Recipient | `divyanshitalreja12@gmail.com` | `Demo@123` |
 | Admin | `admin.sharedtable@gmail.com` | `Demo@123` |
 
 Seeded recipients around the Polaris campus pin in Bengaluru:
@@ -293,8 +293,6 @@ With `DEMO_MODE=true` (or **Expand rescue radius (demo)** when `demoMode` is tru
 6. Donor Insights: patterns from history (Demo Data when seeded).
 7. Assistant: reached + gate note → Confirm or type `send it`.
 8. Admin: listings, claims, heatmap.
-
-Hackathon writeup notes (First Commit): [`docs/first-commit-submission.md`](docs/first-commit-submission.md).
 
 ## Tests
 
