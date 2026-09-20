@@ -270,7 +270,7 @@ Never commit `.env`.
 | Role | Email | Password |
 | --- | --- | --- |
 | Donor (Polaris College Mess) | `pratykshgupta9999@gmail.com` | `Demo@123` |
-| Recipient (Helping Hands NGO) | `helpinghands@foodrescue.demo` | `Demo@123` |
+| Recipient (Helping Hands NGO) | `divyanshitalreja12@gmail.com` | `Demo@123` |
 | Admin | `admin.sharedtable@gmail.com` | `Demo@123` |
 
 Seeded recipients around the Polaris campus pin in Bengaluru:
