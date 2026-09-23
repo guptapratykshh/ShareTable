@@ -69,7 +69,11 @@ If nobody claims, the radius can widen to 4 km and then 6 km so the food gets a 
 
 Live demo: [https://vmcwfgh43e.ap-south-1.awsapprunner.com](https://vmcwfgh43e.ap-south-1.awsapprunner.com)
 
-Public repo: [https://github.com/the-ivii/ShareTable](https://github.com/the-ivii/ShareTable)
+Public repos: [guptapratykshh/ShareTable](https://github.com/guptapratykshh/ShareTable) · [the-ivii/ShareTable](https://github.com/the-ivii/ShareTable) · [guptapratykshh/ShareTableMobile](https://github.com/guptapratykshh/ShareTableMobile)
+
+YouTube: [https://youtu.be/eZ2PY4_q9ak](https://youtu.be/eZ2PY4_q9ak)
+
+Android APK: [download](https://sharetable-mobile-786742959627.s3.ap-south-1.amazonaws.com/releases/ShareTable-android-test.apk) · iOS IPA: [download](https://sharetable-mobile-786742959627.s3.ap-south-1.amazonaws.com/releases/ShareTable-ios-test.ipa)
 
 ## Why First Commit felt different
 
