@@ -6,13 +6,27 @@ ShareTable connects people and businesses with surplus food to registered recipi
 
 This is a working product demo, not a chatbot-only experiment and not a food-waste blog. Donors type how much food they have. The app matches on registration and distance. It never ranks people by need.
 
-**Public repo:** [github.com/the-ivii/ShareTable](https://github.com/the-ivii/ShareTable)
+## Repos and live links
+
+| What | Link |
+| --- | --- |
+| Web + API (live) | [https://vmcwfgh43e.ap-south-1.awsapprunner.com](https://vmcwfgh43e.ap-south-1.awsapprunner.com) |
+| Health check | [https://vmcwfgh43e.ap-south-1.awsapprunner.com/api/health](https://vmcwfgh43e.ap-south-1.awsapprunner.com/api/health) |
+| YouTube demo | [https://youtu.be/eZ2PY4_q9ak](https://youtu.be/eZ2PY4_q9ak) |
+| Web repo (guptapratykshh) | [https://github.com/guptapratykshh/ShareTable](https://github.com/guptapratykshh/ShareTable) |
+| Web repo (the-ivii) | [https://github.com/the-ivii/ShareTable](https://github.com/the-ivii/ShareTable) |
+| Mobile repo (guptapratykshh) | [https://github.com/guptapratykshh/ShareTableMobile](https://github.com/guptapratykshh/ShareTableMobile) |
+| Mobile repo (the-ivii) | [https://github.com/the-ivii/ShareTableMobile](https://github.com/the-ivii/ShareTableMobile) |
+| Android APK (test) | [ShareTable-android-test.apk](https://sharetable-mobile-786742959627.s3.ap-south-1.amazonaws.com/releases/ShareTable-android-test.apk) |
+| iOS IPA (test) | [ShareTable-ios-test.ipa](https://sharetable-mobile-786742959627.s3.ap-south-1.amazonaws.com/releases/ShareTable-ios-test.ipa) |
 
 ## Live demo
 
 - App and API: [https://vmcwfgh43e.ap-south-1.awsapprunner.com](https://vmcwfgh43e.ap-south-1.awsapprunner.com)
 - Health: [https://vmcwfgh43e.ap-south-1.awsapprunner.com/api/health](https://vmcwfgh43e.ap-south-1.awsapprunner.com/api/health) (reports `runtime`, `region`, and `llm`)
 - YouTube demo: [https://youtu.be/eZ2PY4_q9ak](https://youtu.be/eZ2PY4_q9ak)
+- Android test APK: [download](https://sharetable-mobile-786742959627.s3.ap-south-1.amazonaws.com/releases/ShareTable-android-test.apk)
+- iOS test IPA: [download](https://sharetable-mobile-786742959627.s3.ap-south-1.amazonaws.com/releases/ShareTable-ios-test.ipa) (developer-signed; prefer USB install if sideload fails)
 
 Try the seeded accounts under [Demo credentials](#demo-credentials).
 
@@ -98,9 +112,10 @@ AWS still sits under the shipped experience: hosting, container registry, object
 
 ### How this shows up in the three submission pieces
 
-1. **Public GitHub repo:** [https://github.com/the-ivii/ShareTable](https://github.com/the-ivii/ShareTable)
+1. **Public GitHub repos:** [guptapratykshh/ShareTable](https://github.com/guptapratykshh/ShareTable), [the-ivii/ShareTable](https://github.com/the-ivii/ShareTable), plus mobile at [guptapratykshh/ShareTableMobile](https://github.com/guptapratykshh/ShareTableMobile)
 2. **YouTube demo under 3 minutes:** [https://youtu.be/eZ2PY4_q9ak](https://youtu.be/eZ2PY4_q9ak) (shows the rescue flow and AWS in action)
 3. **This writeup:** how App Runner, ECR, S3, EventBridge, IAM, and Bedrock fit the food-rescue product we actually shipped
+4. **Mobile test builds:** [Android APK](https://sharetable-mobile-786742959627.s3.ap-south-1.amazonaws.com/releases/ShareTable-android-test.apk) · [iOS IPA](https://sharetable-mobile-786742959627.s3.ap-south-1.amazonaws.com/releases/ShareTable-ios-test.ipa)
 
 More operator detail lives in [`infrastructure/README.md`](infrastructure/README.md).
 
@@ -214,7 +229,7 @@ score = 0.4*successfulPickupRate + 0.3*onTimeRate
 
 ### Mobile clients (separate app)
 
-[`ShareTableMobile/`](ShareTableMobile/) is an Expo React Native client (Android + iPhone) that talks to the **same** API and database. Native Apple/Google maps; SecureStore for remembered login; 8s foreground notification poll; no background push in v1. See [`ShareTableMobile/README.md`](ShareTableMobile/README.md).
+The mobile clients live in separate repos ([guptapratykshh/ShareTableMobile](https://github.com/guptapratykshh/ShareTableMobile), [the-ivii/ShareTableMobile](https://github.com/the-ivii/ShareTableMobile)). They are Expo React Native apps (Android + iPhone) that talk to the **same** live API and database. Native Apple/Google maps; SecureStore for remembered login; 8s foreground notification poll; no background push in v1. Test builds: [Android APK](https://sharetable-mobile-786742959627.s3.ap-south-1.amazonaws.com/releases/ShareTable-android-test.apk), [iOS IPA](https://sharetable-mobile-786742959627.s3.ap-south-1.amazonaws.com/releases/ShareTable-ios-test.ipa).
 
 ## Architecture
 
